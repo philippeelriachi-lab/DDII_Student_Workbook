@@ -533,8 +533,12 @@ function wireView(){
 }
 
 /* ---------- edits: plan ---------- */
+var renderTimer=null;
+function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
 function setS(id,key,val){ var s=findS(id); if(!s) return; s[key]=val;
-  if(key==="location"||key==="operation") render(); queueSave(); }
+  if(key==="operation") render();
+  else if(key==="location") queueRender();
+  queueSave(); }
 function tickPc(id,p){ var s=findS(id); if(!s) return;
   var i=s.pieces.indexOf(p); if(i<0) s.pieces.push(p); else s.pieces.splice(i,1); render(); queueSave(); }
 function tickSym(id,which,v){ var s=findS(id); if(!s) return;
@@ -605,7 +609,7 @@ function onAddUnplanned(){
 
 /* ---------- edits: review/costing/details ---------- */
 function setTime(id,key,v){ var s=findS(id); if(s){ s[key]=Math.max(0,(parseFloat(v)||0)*60); queueSave(); } }
-function setMeta(k,v){ meta[k]=v; render(); queueSave(); }
+function setMeta(k,v){ meta[k]=v; queueSave(); }
 
 /* long-run nudge — checked once a minute while a phase is running */
 setInterval(function(){

@@ -331,9 +331,14 @@ function render(){
 }
 
 /* ---------- edits ---------- */
-var RER={title:1,kind:1,action:1,digitalVal:1,physicalVal:1};
+var renderTimer=null;
+function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+var RER={kind:1,action:1};
+var RER_DEBOUNCED={title:1,digitalVal:1,physicalVal:1};
 function setF(id,key,val){var e=find(id); if(!e) return; e[key]=val;
-  if(RER[key]) render(); queueSave();}
+  if(RER[key]) render();
+  else if(RER_DEBOUNCED[key]) queueRender();
+  queueSave();}
 function setSlotName(id,which,v){var e=find(id); if(!e) return; e[which]=v; queueSave();}
 function cycSlot(id,which){var e=find(id); if(!e) return;
   var stKey=which+"State"; var i=slotStates.indexOf(e[stKey]||"Planned");

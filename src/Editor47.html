@@ -385,10 +385,24 @@ function render(){
 }
 
 /* ---------- edits ---------- */
-function setMeta(k,v){ meta[k]=v; if(view==="D"){ var scroll=window.scrollY; render(); window.scrollTo(0,scroll); } queueSave(); }
+var renderTimer=null;
+function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+function queueRenderKeepScroll(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){ var scroll=window.scrollY; render(); window.scrollTo(0,scroll); },500);
+}
+function setMeta(k,v){ meta[k]=v;
+  if(k==="archetype") render();
+  else if(view==="D") queueRenderKeepScroll();
+  queueSave(); }
 function setG(id,key,val){ var g=findG(id); if(!g) return; g[key]=val;
-  if(key==="brand"||key==="product"||key==="archetype"){ render(); } queueSave(); }
-function setB(id,key,val){ var b=findB(id); if(!b) return; b[key]=val; render(); queueSave(); }
+  if(key==="archetype") render();
+  else if(key==="brand"||key==="product") queueRender();
+  queueSave(); }
+function setB(id,key,val){ var b=findB(id); if(!b) return; b[key]=val;
+  if(key==="kind"||key==="state") render();
+  else queueRender();
+  queueSave(); }
 function tog(id){ openId=(openId===id)?null:id; render(); }
 function cycleSlot(id,k){ var g=findG(id); if(!g) return;
   var i=slotStates.indexOf(g[k]||"Planned"); g[k]=slotStates[(i+1)%slotStates.length]; render(); queueSave(); }

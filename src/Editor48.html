@@ -335,8 +335,11 @@ function render(){
 }
 
 /* ---------- edits ---------- */
+var renderTimer=null;
+function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
 function setF(id,key,val){ var e=find(id); if(!e) return; e[key]=val;
-  if(key==="title"||key==="method"||key==="decision"||key==="includeInPitch"||key==="referenceId") render();
+  if(key==="method"||key==="decision"||key==="includeInPitch"||key==="referenceId") render();
+  else if(key==="title") queueRender();
   queueSave(); }
 function tog(id){ openId=(openId===id)?null:id; render(); }
 function cyc(id,k){ var e=find(id); if(!e) return;

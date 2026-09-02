@@ -437,12 +437,18 @@ function render(){
 }
 
 /* ---------- edits ---------- */
-var RER={category:1,source:1,status:1,item:1,referenceId:1};
+var renderTimer=null;
+function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+var RER={category:1,source:1,status:1,referenceId:1};
 function setM(id,key,val){var m=findM(id); if(!m) return; m[key]=val;
-  if(RER[key]) render(); else { renderFoot(); queueSave(); return; } queueSave();}
+  if(RER[key]) render();
+  else if(key==="item") queueRender();
+  renderFoot(); queueSave();}
 function setF(id,key,val){var f=findF(id); if(!f) return; f[key]=val;
-  if(key==="location"||key==="operation"||key==="referenceId") render(); queueSave();}
-function setMeta(k,v){ meta[k]=v; render(); queueSave(); }
+  if(key==="operation"||key==="referenceId") render();
+  else if(key==="location") queueRender();
+  queueSave();}
+function setMeta(k,v){ meta[k]=v; renderFoot(); queueSave(); }
 function tog(id){ openId=(openId===id)?null:id; render(); }
 function delM(id){ if(!confirm("Delete this line?")) return;
   ms=ms.filter(function(x){return x.id!==id;}); deletedMaterialIds.push(id); render(); queueSave(); }
