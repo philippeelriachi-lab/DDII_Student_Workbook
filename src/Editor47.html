@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 18px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:960px;margin:0 auto;padding:16px 18px 70px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:24px;
+  text-align:center;color:var(--soft);font-size:13px;margin-bottom:12px}
+.reqs{background:var(--paper);border:1px solid var(--ink);padding:11px 14px;margin-bottom:14px}
+.req{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--rule);font-size:12.5px}
+.req:last-child{border-bottom:none}
+.req .s{font-family:var(--mono);font-size:11px;margin-left:auto}
+.req.met .s{color:var(--ok)} .req.unmet .s{color:var(--mark)}
+.req.met span:first-child{color:var(--soft)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:660px){.g2,.g3{grid-template-columns:1fr}}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f label b{color:var(--mark);font-family:var(--mono)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f textarea{resize:vertical;min-height:52px;line-height:1.45}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.f .hint{font-size:10.5px;color:var(--soft);margin-top:3px;line-height:1.35}
+.f.mono input{font-family:var(--mono);font-size:12px}
+.card2{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:8px}
+.card2.bad{border-left-color:var(--mark)} .card2.good{border-left-color:var(--ok)}
+.head{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;user-select:none}
+.head .nm{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.head .nm.empty{font-weight:400;font-style:italic;color:var(--soft)}
+.head .pill{font-family:var(--mono);font-size:10px;padding:1px 6px;border:1px solid var(--rule);color:var(--soft);flex:none}
+.head .pill.arch{border-color:var(--blue);color:var(--blue)}
+.head .miss{font-family:var(--mono);font-size:10.5px;color:var(--mark);flex:none}
+.head .chev{font-family:var(--mono);font-size:12px;color:var(--soft);flex:none}
+.bodyc{display:none;padding:4px 12px 12px;border-top:1px solid var(--rulesoft)}
+.card2.open .bodyc{display:block}
+.want{border:1px solid var(--ink);padding:10px 12px;margin:11px 0 4px;background:#FBFCFB}
+.want label{display:block;font-size:11px;color:var(--ink);font-weight:600;margin-bottom:3px}
+.want textarea{width:100%;min-height:44px;font-family:var(--sans);font-size:13.5px;
+  border:1px solid var(--rule);background:#fff;padding:6px 8px;resize:vertical}
+.want .hint{font-size:10.5px;color:var(--soft);margin-top:4px;line-height:1.35}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:9px 0 4px}
+@media(max-width:520px){.slots{grid-template-columns:repeat(2,1fr)}}
+.slot{border:1px solid var(--rule);background:#FBFCFB;padding:7px 8px;cursor:pointer;text-align:center}
+.slot.req{border-color:var(--mark)}
+.slot.got{border-color:var(--ok);background:#F4F9F6}
+.slot .nm{font-size:11.5px;font-weight:600}
+.slot .st{font-family:var(--mono);font-size:9.5px;color:var(--soft);margin-top:2px}
+.slot.got .st{color:var(--ok)} .slot.req .st{color:var(--mark)}
+.spread{margin-top:4px}
+.sprow{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12.5px}
+.sprow .n{width:140px}
+.sprow .bar{flex:1;height:11px;background:var(--rulesoft);position:relative}
+.sprow .bar span{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+.sprow .c{font-family:var(--mono);font-size:11px;color:var(--soft);width:24px;text-align:right}
+.verdict{border:1px solid;padding:10px 12px;margin-top:12px;font-size:13px;line-height:1.5}
+.verdict.ok{border-color:var(--ok);background:#F4F9F6;color:var(--ok)}
+.verdict.mix{border-color:var(--amber);background:#FBF7EC;color:var(--amber)}
+.verdict.bad{border-color:var(--mark);background:#FDF6F4;color:var(--mark)}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;margin-bottom:14px;
+  box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+table.spec{width:100%;border-collapse:collapse;margin-bottom:10px}
+table.spec tr{border-bottom:1px solid var(--rulesoft)}
+table.spec tr:last-child{border-bottom:none}
+table.spec th{text-align:left;vertical-align:top;font-size:10px;font-weight:500;color:var(--soft);
+  padding:5px 10px 5px 0;width:30%}
+table.spec td{vertical-align:top;font-size:11.5px;padding:5px 0;white-space:pre-wrap}
+table.spec td.blank{color:var(--mark);font-style:italic;font-size:10.5px}
+table.spec td.mono{font-family:var(--mono);font-size:10.5px}
+.slotline{font-family:var(--mono);font-size:10px;color:var(--soft);margin-bottom:9px}
+.slotline b.no{color:var(--mark)} .slotline b.yes{color:var(--ok)}
+.wantout{border-top:2px solid var(--ink);padding-top:8px;margin-top:6px}
+.wantout .l{font-size:10px;color:var(--soft);margin-bottom:3px}
+.wantout .v{font-size:12.5px;line-height:1.45}
+.wantout .v.blank{color:var(--mark);font-style:italic;font-size:11px}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 47</span>
+  <h1>Product Page Research Capture</h1>
+</div>
+<div class="tabs">
+  <button id="tabG" class="on">Garments</button>
+  <button id="tabB">Board images</button>
+  <button id="tabD">Direction</button>
+  <button id="tabS">Sheets</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+
+<script>
+var SLOTS=[{k:"slotFront",label:"Front",req:true},{k:"slotBack",label:"Back",req:true},
+           {k:"slotSide",label:"Side",req:false},{k:"slotDetail",label:"Detail",req:false}];
+var REQ=["brand","product","description","composition","want"];
+
+var meta={}, gs=[], bs=[], archetypes=[], boardKinds=[], slotStates=["Planned","Captured","On the board"];
+var openId=null, view="G", saveTimer=null, deletedGarmentIds=[], deletedBoardIds=[];
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function missG(g){ return REQ.filter(function(k){return String(g[k]||"").trim()==="";}); }
+function slotGot(g,k){ return g[k]==="Captured"||g[k]==="On the board"; }
+function threeViews(g){ return slotGot(g,"slotFront")&&slotGot(g,"slotBack")&&(slotGot(g,"slotSide")||slotGot(g,"slotDetail")); }
+function findG(id){ for(var i=0;i<gs.length;i++) if(gs[i].id===id) return gs[i]; return null; }
+function findB(id){ for(var i=0;i<bs.length;i++) if(bs[i].id===id) return bs[i]; return null; }
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function doSave(){
+  var payload={meta:meta, garments:gs, boards:bs,
+    deletedGarmentIds:deletedGarmentIds, deletedBoardIds:deletedBoardIds};
+  deletedGarmentIds=[]; deletedBoardIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t47_save(JSON.stringify(payload));
+}
+
+/* ---------- requirements ---------- */
+function renderReqs(){
+  var n=gs.length;
+  var complete=gs.filter(function(g){return missG(g).length===0;}).length;
+  var tv=gs.filter(threeViews).length;
+  var comp=gs.filter(function(g){return String(g.composition||"").trim();}).length;
+  var wants=gs.filter(function(g){return String(g.want||"").trim();}).length;
+  var matRefs=bs.filter(function(b){return ["Fabric","Trim","Hardware"].indexOf(b.kind)>=0;}).length;
+  var cutRefs=bs.filter(function(b){return ["Cut","Silhouette"].indexOf(b.kind)>=0;}).length;
+  var items=[
+    [n>=5,"Five garments minimum",n+" / 5"],
+    [complete>=5,"Capture sheets complete",complete+" / 5"],
+    [tv>=1,"One garment front, back and side",tv+" / 1"],
+    [comp>=3,"Fibre composition recorded",comp+" / 3"],
+    [matRefs>=3,"Fabric, trim and hardware reference",matRefs+" / 3"],
+    [cutRefs>=3,"Cut and silhouette reference",cutRefs+" / 3"],
+    [n>0&&wants===n,"Every garment says what you want from it",wants+" / "+n],
+    [!!String(meta.direction||"").trim(),"Direction stated",String(meta.direction||"").trim()?"yes":"—"]
+  ];
+  return '<div class="reqs"><div style="font-size:11px;color:var(--soft);margin-bottom:8px">Checked against the P1 brief</div>'+
+    items.map(function(i){
+      return '<div class="req '+(i[0]?"met":"unmet")+'"><span>'+i[1]+'</span><span class="s">'+i[2]+'</span></div>';
+    }).join("")+'</div>';
+}
+
+/* ---------- garments ---------- */
+function selHTML(id,key,opts,val,blank){
+  return '<select onchange="setG(\''+id+'\',\''+key+'\',this.value)"><option value="">'+(blank||"—")+'</option>'+
+    opts.map(function(o){return '<option'+(val===o?" selected":"")+'>'+esc(o)+'</option>';}).join("")+'</select>';
+}
+function inpHTML(id,key,val,ph){
+  return '<input type="text" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
+    '" oninput="setG(\''+id+'\',\''+key+'\',this.value)">';
+}
+function renderGarments(){
+  if(!gs.length) return '<div class="empty">Nothing captured yet. Five garments, each from a brand\'s own product page.</div>';
+  return gs.map(function(g){
+    var m=missG(g), open=g.id===openId;
+    var title=[g.brand,g.product].filter(Boolean).join(" · ");
+    var slots=SLOTS.map(function(s){
+      var st=g[s.k]||"Planned", got=slotGot(g,s.k);
+      return '<div class="slot '+(got?"got":(s.req?"req":""))+'" onclick="cycleSlot(\''+g.id+'\',\''+s.k+'\')">'+
+        '<div class="nm">'+s.label+(s.req?" •":"")+'</div><div class="st">'+esc(st)+'</div></div>';
+    }).join("");
+    return '<div class="card2 '+(open?"open ":"")+(m.length?"bad":"good")+'">'+
+      '<div class="head" onclick="tog(\''+g.id+'\')">'+
+        '<span class="nm'+(title?"":" empty")+'">'+(esc(title)||"Untitled garment")+'</span>'+
+        (g.archetype?'<span class="pill arch">'+esc(g.archetype)+'</span>':'')+
+        (threeViews(g)?'<span class="pill">3 views</span>':'')+
+        (m.length?'<span class="miss">'+m.length+' missing</span>':'')+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="bodyc">'+
+        '<div class="g3">'+
+          '<div class="f"><label>Brand <b>•</b></label>'+inpHTML(g.id,"brand",g.brand)+'</div>'+
+          '<div class="f"><label>Product name <b>•</b></label>'+inpHTML(g.id,"product",g.product)+'</div>'+
+          '<div class="f mono"><label>Price point</label>'+inpHTML(g.id,"price",g.price,"145 USD")+'</div>'+
+        '</div>'+
+        '<div class="g2">'+
+          '<div class="f mono"><label>Source</label>'+inpHTML(g.id,"url",g.url,"https://")+'</div>'+
+          '<div class="f"><label>Archetype</label>'+selHTML(g.id,"archetype",archetypes,g.archetype)+'</div>'+
+        '</div>'+
+        '<div class="slots">'+slots+'</div>'+
+        '<div class="hint" style="font-size:10.5px;color:var(--soft);margin-bottom:9px">'+
+          'Click a slot to move it on. Back is the view everyone skips and the one that decides whether '+
+          'a garment can be developed at all.</div>'+
+        '<div class="f"><label>Product description, word for word <b>•</b></label>'+
+          '<textarea rows="3" oninput="setG(\''+g.id+'\',\'description\',this.value)">'+esc(g.description)+'</textarea>'+
+          '<div class="hint">Copy it exactly. How the industry names things is half of what you are learning here.</div></div>'+
+        '<div class="g2">'+
+          '<div class="f"><label>Fibre composition <b>•</b></label>'+
+            inpHTML(g.id,"composition",g.composition,"100% cotton, 240gsm")+'</div>'+
+          '<div class="f"><label>Care instructions</label>'+
+            inpHTML(g.id,"care",g.care,"Tells you how the cloth behaves")+'</div>'+
+        '</div>'+
+        '<div class="f"><label>Construction details stated</label>'+
+          '<textarea rows="2" placeholder="Seam finishes, closures, pocket types, yoke, plackets" '+
+          'oninput="setG(\''+g.id+'\',\'construction\',this.value)">'+esc(g.construction)+'</textarea></div>'+
+        '<div class="want"><label>What I want from this garment <b style="color:var(--mark)">•</b></label>'+
+          '<textarea oninput="setG(\''+g.id+'\',\'want\',this.value)">'+esc(g.want)+'</textarea>'+
+          '<div class="hint">One line. Everything above this is collection. This is a decision, and it is '+
+          'what stops a board becoming a pile.</div></div>'+
+        '<div class="bar2" style="margin:8px 0 0">'+
+          '<button class="a q d" onclick="delG(\''+g.id+'\')">Delete garment</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- board images ---------- */
+function renderBoards(){
+  if(!bs.length) return '<div class="empty">Nothing yet. Three fabric, trim or hardware images and three showing cut or silhouette.</div>';
+  return bs.map(function(b){
+    var open=b.id===openId, bad=!String(b.name||"").trim()||!b.kind;
+    return '<div class="card2 '+(open?"open ":"")+(bad?"bad":"good")+'">'+
+      '<div class="head" onclick="tog(\''+b.id+'\')">'+
+        '<span class="nm'+(b.name?"":" empty")+'">'+(esc(b.name)||"Unnamed image")+'</span>'+
+        (b.kind?'<span class="pill">'+esc(b.kind)+'</span>':'')+
+        '<span class="pill'+(b.state==="Planned"?"":" arch")+'">'+esc(b.state||"Planned")+'</span>'+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="bodyc">'+
+        '<div class="g3">'+
+          '<div class="f"><label>What it shows <b>•</b></label>'+
+            '<input type="text" value="'+esc(b.name)+'" placeholder="Herringbone twill, close" '+
+            'oninput="setB(\''+b.id+'\',\'name\',this.value)"></div>'+
+          '<div class="f"><label>Kind <b>•</b></label>'+
+            '<select onchange="setB(\''+b.id+'\',\'kind\',this.value)"><option value="">—</option>'+
+            boardKinds.map(function(o){return '<option'+(b.kind===o?" selected":"")+'>'+o+'</option>';}).join("")+
+            '</select></div>'+
+          '<div class="f"><label>Status</label>'+
+            '<select onchange="setB(\''+b.id+'\',\'state\',this.value)">'+
+            slotStates.map(function(o){return '<option'+(b.state===o?" selected":"")+'>'+o+'</option>';}).join("")+
+            '</select></div>'+
+        '</div>'+
+        '<div class="f"><label>Why it is on the board</label>'+
+          '<input type="text" value="'+esc(b.note)+'" placeholder="What you are taking from it" '+
+          'oninput="setB(\''+b.id+'\',\'note\',this.value)"></div>'+
+        '<div class="bar2" style="margin:0"><button class="a q d" onclick="delB(\''+b.id+'\')">Delete</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- direction ---------- */
+function renderDirection(){
+  var counts={}, total=0;
+  gs.forEach(function(g){ if(!g.archetype) return; counts[g.archetype]=(counts[g.archetype]||0)+1; total++; });
+  var keys=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var max=keys.length?counts[keys[0]]:0;
+  var spread = keys.length
+    ? keys.map(function(k){
+        return '<div class="sprow"><span class="n">'+esc(k)+'</span>'+
+          '<span class="bar"><span style="width:'+Math.round(counts[k]/max*100)+'%"></span></span>'+
+          '<span class="c">'+counts[k]+'</span></div>';
+      }).join("")
+    : '<p class="note" style="margin:0">No archetypes set on your garments yet.</p>';
+
+  var unset=gs.length-total, verdict="";
+  if(gs.length){
+    if(unset>0){
+      verdict='<div class="verdict bad">'+unset+' garment'+(unset===1?"":"s")+' with no archetype set. Until they all have one, '+
+        'neither you nor anyone else can tell whether the board is coherent.</div>';
+    } else if(keys.length===1){
+      verdict='<div class="verdict ok">Every reference is a '+keys[0].toLowerCase()+'. That is coherent, and easy to defend.</div>';
+    } else if(keys.length===2 && String(meta.combineWhy||"").trim()){
+      verdict='<div class="verdict ok">Two archetypes, deliberately combined, with a stated reason. That is a direction rather than a muddle.</div>';
+    } else if(keys.length===2){
+      verdict='<div class="verdict mix">Two archetypes and no reason given. Say below why they belong together, or drop one.</div>';
+    } else {
+      verdict='<div class="verdict bad">'+keys.length+' archetypes across '+gs.length+' garments. A board this spread cannot be '+
+        'developed from — you are still choosing rather than deciding.</div>';
+    }
+  }
+
+  return '<p class="lbl">What you are setting out to make</p>'+
+    '<div class="card">'+
+      '<div class="f"><label>Direction, in one sentence <b>•</b></label>'+
+        '<textarea rows="2" placeholder="You will say this out loud at Session 4" '+
+        'oninput="setMeta(\'direction\',this.value)">'+esc(meta.direction)+'</textarea>'+
+        '<div class="hint">Write it before you gather, then rewrite it after. If it did not change, '+
+        'you were shopping for evidence rather than researching.</div></div>'+
+      '<div class="g2">'+
+        '<div class="f"><label>Archetype you are claiming</label>'+
+          '<select onchange="setMeta(\'archetype\',this.value)"><option value="">—</option>'+
+          archetypes.map(function(a){return '<option'+(meta.archetype===a?" selected":"")+'>'+esc(a)+'</option>';}).join("")+
+          '</select></div>'+
+        '<div class="f"><label>Your name</label>'+
+          '<input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+      '</div>'+
+    '</div>'+
+    '<p class="lbl">What your references actually are</p>'+
+    '<div class="card">'+
+      '<div class="spread">'+spread+'</div>'+verdict+
+      '<div class="f" style="margin-top:13px"><label>If you are combining archetypes, say why</label>'+
+        '<textarea rows="2" placeholder="A camp collar on an overshirt body, because…" '+
+        'oninput="setMeta(\'combineWhy\',this.value)">'+esc(meta.combineWhy)+'</textarea>'+
+        '<div class="hint">Combining deliberately is a direction. Combining without noticing reads as undecided, '+
+        'and that is the difference the criterion is looking for.</div></div>'+
+    '</div>';
+}
+
+/* ---------- sheets ---------- */
+function renderSheets(){
+  if(!gs.length) return '<div class="empty">Sheets appear here as you capture, one page per garment.</div>';
+  function cell(v,mono){
+    var t=String(v||"").trim();
+    return t?'<td'+(mono?' class="mono"':'')+'>'+esc(t)+'</td>':'<td class="blank">not recorded</td>';
+  }
+  var sheets = gs.map(function(g,i){
+    var want=String(g.want||"").trim();
+    var line=SLOTS.map(function(s){
+      var got=slotGot(g,s.k);
+      return s.label+' <b class="'+(got?"yes":"no")+'">'+(got?"✓":"–")+'</b>';
+    }).join("&nbsp;&nbsp;");
+    return '<div class="sheet">'+
+      '<div class="sheet-head"><span class="t">'+
+        (esc([g.brand,g.product].filter(Boolean).join(" · "))||"Untitled garment")+'</span>'+
+        '<span class="n">47 / '+String(i+1).padStart(2,"0")+'</span></div>'+
+      '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+        '<span>'+(esc(g.archetype)||"archetype not set")+'</span>'+
+        (g.price?'<span>'+esc(g.price)+'</span>':'')+'</div>'+
+      '<div class="slotline">Views: '+line+'</div>'+
+      '<table class="spec">'+
+        '<tr><th>Source</th>'+cell(g.url,true)+'</tr>'+
+        '<tr><th>Description, verbatim</th>'+cell(g.description)+'</tr>'+
+        '<tr><th>Fibre composition</th>'+cell(g.composition)+'</tr>'+
+        '<tr><th>Construction details</th>'+cell(g.construction)+'</tr>'+
+        '<tr><th>Care instructions</th>'+cell(g.care)+'</tr>'+
+      '</table>'+
+      '<div class="wantout"><div class="l">What I want from this garment</div>'+
+      '<div class="v'+(want?"":" blank")+'">'+(want?esc(want):"not yet decided")+'</div></div>'+
+    '</div>';
+  }).join("");
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+sheets;
+}
+
+function render(){
+  var html;
+  if(view==="G") html = renderReqs()+renderGarments()+
+    '<div class="bar2"><button class="a p" id="addG">Add a garment</button></div>'+
+    '<p class="note">Go to a brand\'s own product page for a garment near your direction. Their photography is '+
+    'consistent, their copy names things the way the industry names them, and the composition is stated '+
+    'rather than guessed. Aggregator sites give you none of that.</p>';
+  else if(view==="B") html = '<p class="lbl">Reference that is not a whole garment</p>'+
+    '<p class="note" style="margin-bottom:12px">Fabric, trim and hardware close-ups, and images that show cut '+
+    'or silhouette. These sit on your board alongside the garments and P1 asks for at least three of each.</p>'+
+    renderBoards()+'<div class="bar2"><button class="a p" id="addB">Add a board image</button></div>';
+  else if(view==="D") html = renderDirection();
+  else html = renderSheets();
+  document.getElementById("page").innerHTML = html;
+  if(view==="G") document.getElementById("addG").onclick = onAddGarment;
+  if(view==="B") document.getElementById("addB").onclick = onAddBoard;
+  if(view==="S" && gs.length) document.getElementById("printBtn").onclick = function(){ window.print(); };
+}
+
+/* ---------- edits ---------- */
+function setMeta(k,v){ meta[k]=v; if(view==="D"){ var scroll=window.scrollY; render(); window.scrollTo(0,scroll); } queueSave(); }
+function setG(id,key,val){ var g=findG(id); if(!g) return; g[key]=val;
+  if(key==="brand"||key==="product"||key==="archetype"){ render(); } queueSave(); }
+function setB(id,key,val){ var b=findB(id); if(!b) return; b[key]=val; render(); queueSave(); }
+function tog(id){ openId=(openId===id)?null:id; render(); }
+function cycleSlot(id,k){ var g=findG(id); if(!g) return;
+  var i=slotStates.indexOf(g[k]||"Planned"); g[k]=slotStates[(i+1)%slotStates.length]; render(); queueSave(); }
+function delG(id){ if(!confirm("Delete this garment?")) return;
+  gs=gs.filter(function(x){return x.id!==id;}); deletedGarmentIds.push(id); render(); queueSave(); }
+function delB(id){ if(!confirm("Delete this image?")) return;
+  bs=bs.filter(function(x){return x.id!==id;}); deletedBoardIds.push(id); render(); queueSave(); }
+
+function onAddGarment(){ google.script.run.withSuccessHandler(function(json){
+  applyData(json); var last=gs[gs.length-1]; if(last){ openId=last.id; render(); }
+}).t47_addGarment(); }
+function onAddBoard(){ google.script.run.withSuccessHandler(function(json){
+  applyData(json); var last=bs[bs.length-1]; if(last){ openId=last.id; render(); }
+}).t47_addBoard(); }
+
+function setView(v){
+  view=v;
+  [["tabG","G"],["tabB","B"],["tabD","D"],["tabS","S"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+document.getElementById("tabG").onclick=function(){setView("G");};
+document.getElementById("tabB").onclick=function(){setView("B");};
+document.getElementById("tabD").onclick=function(){setView("D");};
+document.getElementById("tabS").onclick=function(){setView("S");};
+
+function applyData(json){
+  var d=JSON.parse(json);
+  meta=d.meta; gs=d.garments; bs=d.boards;
+  archetypes=d.archetypes; boardKinds=d.boardKinds; slotStates=d.slotStates;
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t47_get();
+</script>
+</body>
+</html>
