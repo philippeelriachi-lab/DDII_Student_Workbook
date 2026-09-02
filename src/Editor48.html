@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 18px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:960px;margin:0 auto;padding:16px 18px 70px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:24px;
+  text-align:center;color:var(--soft);font-size:13px;margin-bottom:12px}
+.reqs{background:var(--paper);border:1px solid var(--ink);padding:11px 14px;margin-bottom:14px}
+.req{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--rule);font-size:12.5px}
+.req:last-child{border-bottom:none}
+.req .s{font-family:var(--mono);font-size:11px;margin-left:auto}
+.req.met .s{color:var(--ok)} .req.unmet .s{color:var(--mark)} .req.soft .s{color:var(--amber)}
+.req.met span:first-child{color:var(--soft)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:660px){.g2,.g3{grid-template-columns:1fr}}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f label b{color:var(--mark);font-family:var(--mono)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f textarea{resize:vertical;min-height:48px;line-height:1.45}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.f .hint{font-size:10.5px;color:var(--soft);margin-top:3px;line-height:1.35}
+.card2{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:8px}
+.card2.bad{border-left-color:var(--mark)} .card2.good{border-left-color:var(--ok)}
+.card2.out{opacity:.5}
+.head{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;user-select:none}
+.head .idx{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:18px}
+.head .nm{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.head .nm.empty{font-weight:400;font-style:italic;color:var(--soft)}
+.head .pill{font-family:var(--mono);font-size:10px;padding:1px 6px;border:1px solid var(--rule);color:var(--soft);flex:none}
+.head .pill.m{border-color:var(--blue);color:var(--blue)}
+.head .pill.rule{border-color:var(--mark);color:var(--mark)}
+.head .miss{font-family:var(--mono);font-size:10.5px;color:var(--mark);flex:none}
+.head .chev{font-family:var(--mono);font-size:12px;color:var(--soft);flex:none}
+.bodyc{display:none;padding:4px 12px 12px;border-top:1px solid var(--rulesoft)}
+.card2.open .bodyc{display:block}
+.methods{display:flex;border:1px solid var(--rule);margin-bottom:10px}
+.methods label{flex:1;text-align:center;padding:7px 5px;font-size:12.5px;cursor:pointer;
+  border-right:1px solid var(--rule);background:#FCFDFC}
+.methods label:last-child{border-right:none}
+.methods label.on{background:var(--ink);color:#fff}
+.methods label:hover{background:var(--rulesoft)}
+.methods label.on:hover{background:var(--ink)}
+.revealed{border:1px solid var(--ink);padding:10px 12px;margin:11px 0 4px;background:#FBFCFB}
+.revealed label{display:block;font-size:11px;color:var(--ink);font-weight:600;margin-bottom:3px}
+.revealed textarea{width:100%;min-height:52px;font-family:var(--sans);font-size:13.5px;
+  border:1px solid var(--rule);background:#fff;padding:6px 8px;resize:vertical}
+.revealed .hint{font-size:10.5px;color:var(--soft);margin-top:5px;line-height:1.4}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:9px 0 4px}
+@media(max-width:520px){.slots{grid-template-columns:repeat(2,1fr)}}
+.slot{border:1px solid var(--rule);background:#FBFCFB;padding:7px 8px;cursor:pointer;text-align:center}
+.slot.req{border-color:var(--mark)}
+.slot.got{border-color:var(--ok);background:#F4F9F6}
+.slot .nm{font-size:11.5px;font-weight:600}
+.slot .st{font-family:var(--mono);font-size:9.5px;color:var(--soft);margin-top:2px}
+.slot.got .st{color:var(--ok)} .slot.req .st{color:var(--mark)}
+.orow{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--rule);
+  padding:7px 10px;margin-bottom:6px}
+.orow.off{opacity:.45}
+.orow input[type=checkbox]{width:15px;height:15px;flex:none}
+.orow .n{font-family:var(--mono);font-size:11px;color:var(--soft);width:20px;flex:none}
+.orow .t{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.orow .t small{display:block;color:var(--soft);font-size:10.5px}
+.orow .im{font-family:var(--mono);font-size:10px;flex:none}
+.orow .im.no{color:var(--mark)} .orow .im.yes{color:var(--ok)}
+.orow button{font-family:var(--mono);font-size:10.5px;padding:3px 6px;border:1px solid var(--rule);
+  background:#fff;color:var(--soft);cursor:pointer;flex:none}
+.orow button:hover{background:var(--ink);color:#fff}
+.orow button[disabled]{opacity:.25}
+.shotline{background:var(--paper);border:1px solid var(--ink);padding:11px 14px;margin-bottom:13px;font-size:12.5px}
+.shotline b{font-family:var(--mono)}
+.shotline.bad{border-color:var(--mark);color:var(--mark);background:#FDF6F4}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;margin-bottom:14px;
+  box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+table.spec{width:100%;border-collapse:collapse;margin-bottom:9px}
+table.spec tr{border-bottom:1px solid var(--rulesoft)}
+table.spec tr:last-child{border-bottom:none}
+table.spec th{text-align:left;vertical-align:top;font-size:10px;font-weight:500;color:var(--soft);
+  padding:5px 10px 5px 0;width:28%}
+table.spec td{vertical-align:top;font-size:11.5px;padding:5px 0;white-space:pre-wrap}
+table.spec td.blank{color:var(--mark);font-style:italic;font-size:10.5px}
+.revout{border-top:2px solid var(--ink);padding-top:8px;margin-top:6px}
+.revout .l{font-size:10px;color:var(--soft);margin-bottom:3px}
+.revout .v{font-size:12.5px;line-height:1.45}
+.revout .v.blank{color:var(--mark);font-style:italic;font-size:11px}
+.runrow{display:grid;grid-template-columns:24px 1fr 120px 84px;gap:9px;padding:5px 0;
+  border-bottom:1px solid var(--rulesoft);font-size:11.5px}
+.runrow .m{font-family:var(--mono);font-size:10.5px;color:var(--soft)}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 48</span>
+  <h1>Iteration Log</h1>
+</div>
+<div class="tabs">
+  <button id="tabL" class="on">Log</button>
+  <button id="tabC">Compile</button>
+  <button id="tabS">Sheets</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+
+<script>
+var SLOTS=[{k:"slotFront",label:"Front",req:true},{k:"slotBack",label:"Back",req:false},
+           {k:"slotSide",label:"Side",req:false},{k:"slotPattern",label:"Pattern",req:false}];
+var REQ=["title","method","tried","revealed"];
+
+var meta={}, es=[], refs=[], methods=[], decisions=[], slotStates=["Planned","Captured"];
+var openId=null, view="L", saveTimer=null, deletedIds=[];
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function miss(e){ return REQ.filter(function(k){return String(e[k]||"").trim()==="";}); }
+function got(e,k){ return e[k]==="Captured"; }
+function threeViews(e){ return got(e,"slotFront")&&got(e,"slotBack")&&got(e,"slotSide"); }
+function find(id){ for(var i=0;i<es.length;i++) if(es[i].id===id) return es[i]; return null; }
+function refTitle(id){ for(var i=0;i<refs.length;i++) if(refs[i].id===id) return refs[i].title; return ""; }
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function doSave(){
+  var payload={meta:meta, iterations:es, deletedIds:deletedIds};
+  deletedIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t48_save(JSON.stringify(payload));
+}
+
+/* ---------- requirements ---------- */
+function renderReqs(){
+  var n=es.length;
+  var blockUsed=es.some(function(e){return e.method===methods[0]||e.method===methods[2];});
+  var d3Used=es.some(function(e){return e.method===methods[1]||e.method===methods[2];});
+  var tv=es.filter(threeViews).length;
+  var traced=es.filter(function(e){return String(e.referenceId||"").trim();}).length;
+  var rev=es.filter(function(e){return String(e.revealed||"").trim();}).length;
+  var inc=es.filter(function(e){return e.includeInPitch!==false;}).length;
+  var items=[
+    [n>=5?"met":"unmet","Five iterations minimum",n+" / 5"],
+    [n>=8?"met":(n>=5?"soft":"unmet"),"Eight is where strong sets land",n+" / 8"],
+    [(blockUsed&&d3Used)?"met":"unmet","Both methods evidenced",
+      (blockUsed?"block ":"—— ")+(d3Used?"3D":"——")],
+    [tv>=3?"met":"unmet","Three shown front, back and side",tv+" / 3"],
+    [(n>0&&traced===n)?"met":"unmet","Every one traced to a reference",traced+" / "+n],
+    [(n>0&&rev===n)?"met":"unmet","Every one says what it revealed",rev+" / "+n],
+    [(n>0&&inc<n)?"met":(n>0?"soft":"unmet"),"Compilation edited, not exhaustive",inc+" of "+n]
+  ];
+  return '<div class="reqs"><div style="font-size:11px;color:var(--soft);margin-bottom:8px">Checked against the P2 brief</div>'+
+    items.map(function(i){
+      return '<div class="req '+i[0]+'"><span>'+i[1]+'</span><span class="s">'+i[2]+'</span></div>';
+    }).join("")+'</div>';
+}
+
+/* ---------- log ---------- */
+function renderEntries(){
+  if(!es.length) return '<div class="empty">Nothing yet. Make something first, then record it — the log follows the work, it does not plan it.</div>';
+  return es.map(function(e,i){
+    var m=miss(e), open=e.id===openId;
+    var slots=SLOTS.map(function(s){
+      var st=e[s.k]||"Planned", g=got(e,s.k);
+      return '<div class="slot '+(g?"got":(s.req?"req":""))+'" onclick="cyc(\''+e.id+'\',\''+s.k+'\')">'+
+        '<div class="nm">'+s.label+(s.req?" •":"")+'</div><div class="st">'+esc(st)+'</div></div>';
+    }).join("");
+    var refOpts=['<option value="">— which reference —</option>'].concat(
+      refs.map(function(r){return '<option value="'+r.id+'"'+(e.referenceId===r.id?" selected":"")+'>'+esc(r.title)+'</option>';})
+    ).join("");
+    return '<div class="card2 '+(open?"open ":"")+(m.length?"bad":"good")+(e.includeInPitch===false?" out":"")+'">'+
+      '<div class="head" onclick="tog(\''+e.id+'\')">'+
+        '<span class="idx">'+String(i+1).padStart(2,"0")+'</span>'+
+        '<span class="nm'+(e.title?"":" empty")+'">'+(esc(e.title)||"Untitled iteration")+'</span>'+
+        (e.method?'<span class="pill m">'+esc(e.method)+'</span>':'')+
+        (e.decision===decisions[2]?'<span class="pill rule">ruled out</span>':'')+
+        (m.length?'<span class="miss">'+m.length+' missing</span>':'')+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="bodyc">'+
+        '<div class="g3">'+
+          '<div class="f"><label>What it is <b>•</b></label>'+
+            '<input type="text" value="'+esc(e.title)+'" placeholder="Short name you will recognise later" '+
+            'oninput="setF(\''+e.id+'\',\'title\',this.value)"></div>'+
+          '<div class="f"><label>Session</label><select onchange="setF(\''+e.id+'\',\'session\',this.value)">'+
+            ['','5','6','own time'].map(function(o){
+              return '<option'+(String(e.session)===o?" selected":"")+'>'+(o||"—")+'</option>';}).join("")+
+            '</select></div>'+
+          '<div class="f"><label>Where it leaves it</label><select onchange="setF(\''+e.id+'\',\'decision\',this.value)">'+
+            ['<option value="">—</option>'].concat(decisions.map(function(o){
+              return '<option'+(e.decision===o?" selected":"")+'>'+o+'</option>';})).join("")+
+            '</select></div>'+
+        '</div>'+
+        '<div class="f"><label>Method <b>•</b></label><div class="methods">'+
+          methods.map(function(mm){
+            return '<label class="'+(e.method===mm?"on":"")+'" onclick="setF(\''+e.id+'\',\'method\',\''+esc(mm).replace(/'/g,"\\'")+'\')">'+esc(mm)+'</label>';
+          }).join("")+'</div>'+
+          '<div class="hint">By the end you should see which one you reach for by default. That is worth knowing about yourself.</div></div>'+
+        '<div class="f"><label>Reference it came from</label>'+
+          '<select onchange="setF(\''+e.id+'\',\'referenceId\',this.value)">'+refOpts+'</select>'+
+          (refs.length?'':'<div class="hint">Capture garments in Tool 47 and they will appear here.</div>')+'</div>'+
+        '<div class="slots">'+slots+'</div>'+
+        '<div class="f"><label>What I tried <b>•</b></label>'+
+          '<textarea rows="2" placeholder="The move you made, in a line or two" '+
+          'oninput="setF(\''+e.id+'\',\'tried\',this.value)">'+esc(e.tried)+'</textarea></div>'+
+        '<div class="revealed"><label>What it revealed <b style="color:var(--mark)">•</b></label>'+
+          '<textarea oninput="setF(\''+e.id+'\',\'revealed\',this.value)">'+esc(e.revealed)+'</textarea>'+
+          '<div class="hint">"Added volume through slashing at the yoke" is a description. '+
+          '"Slashing at the yoke gave volume but killed the shoulder line, so it needs to come from below" is a finding.</div></div>'+
+        '<div class="bar2" style="margin:8px 0 0">'+
+          '<button class="a q" onclick="dup(\''+e.id+'\')">Duplicate</button>'+
+          '<button class="a q d" onclick="del(\''+e.id+'\')">Delete</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- compile ---------- */
+function renderOrder(){
+  if(!es.length) return '<div class="empty">Add iterations in the Log first.</div>';
+  var inc=es.filter(function(e){return e.includeInPitch!==false;});
+  var planned=0;
+  inc.forEach(function(e){ SLOTS.forEach(function(s){ if((e[s.k]||"Planned")==="Planned" && s.req) planned++; }); });
+  var sl = planned
+    ? '<div class="shotline bad"><b>'+planned+'</b> image'+(planned===1?"":"s")+' still to make before this compilation exists. '+
+      'They are marked Planned on the iterations you have included.</div>'
+    : '<div class="shotline">Every included iteration has its front view captured. <b>'+inc.length+'</b> of <b>'+es.length+'</b> going in.</div>';
+  var rows = es.map(function(e,i){
+    var g=got(e,"slotFront");
+    return '<div class="orow '+(e.includeInPitch!==false?"":"off")+'">'+
+      '<input type="checkbox" '+(e.includeInPitch!==false?"checked":"")+' onchange="setF(\''+e.id+'\',\'includeInPitch\',this.checked)">'+
+      '<span class="n">'+String(i+1).padStart(2,"0")+'</span>'+
+      '<span class="t">'+(esc(e.title)||"<em>Untitled</em>")+
+        '<small>'+(esc(e.method)||"method not set")+(e.decision?" · "+esc(e.decision):"")+'</small></span>'+
+      '<span class="im '+(g?"yes":"no")+'">'+(g?"front ✓":"front planned")+'</span>'+
+      '<button onclick="mv(\''+e.id+'\',-1)" '+(i===0?"disabled":"")+'>↑</button>'+
+      '<button onclick="mv(\''+e.id+'\',1)" '+(i===es.length-1?"disabled":"")+'>↓</button>'+
+    '</div>';
+  }).join("");
+  return sl+rows;
+}
+
+/* ---------- sheets ---------- */
+function renderSheets(){
+  if(!es.length) return '<div class="empty">Sheets appear here as you log.</div>';
+  function cell(v){ var t=String(v||"").trim();
+    return t?'<td>'+esc(t)+'</td>':'<td class="blank">not recorded</td>'; }
+  var pages=es.map(function(e,i){
+    var rev=String(e.revealed||"").trim();
+    var views=SLOTS.map(function(s){ return s.label+' '+(got(e,s.k)?"✓":"–"); }).join(" · ");
+    return '<div class="sheet">'+
+      '<div class="sheet-head"><span class="t">'+(esc(e.title)||"Untitled iteration")+'</span>'+
+      '<span class="n">48 / '+String(i+1).padStart(2,"0")+'</span></div>'+
+      '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+        '<span>'+(e.session?"Session "+esc(e.session):"—")+'</span>'+
+        '<span>'+(esc(e.method)||"method not set")+'</span>'+
+        (e.decision?'<span><strong>'+esc(e.decision)+'</strong></span>':'')+
+        '<span style="font-family:var(--mono);font-size:10.5px">'+views+'</span></div>'+
+      '<table class="spec">'+
+        '<tr><th>Reference it came from</th>'+cell(refTitle(e.referenceId))+'</tr>'+
+        '<tr><th>What I tried</th>'+cell(e.tried)+'</tr></table>'+
+      '<div class="revout"><div class="l">What it revealed</div>'+
+      '<div class="v'+(rev?"":" blank")+'">'+(rev?esc(rev):"not recorded")+'</div></div>'+
+    '</div>';
+  }).join("");
+  var inc=es.filter(function(e){return e.includeInPitch!==false;});
+  var run='<div class="sheet"><div class="sheet-head"><span class="t">Compilation running order</span>'+
+    '<span class="n">48 / order</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+    '<span>'+inc.length+' of '+es.length+' included</span></div>'+
+    '<div class="runrow" style="border-bottom:1px solid var(--ink);color:var(--soft);font-size:10px">'+
+      '<span></span><span>Iteration</span><span>Method</span><span>Front view</span></div>'+
+    inc.map(function(e,i){
+      return '<div class="runrow"><span class="m">'+String(i+1).padStart(2,"0")+'</span>'+
+        '<span>'+(esc(e.title)||"Untitled")+'</span>'+
+        '<span class="m">'+(esc(e.method)||"—")+'</span>'+
+        '<span class="m" style="color:'+(got(e,"slotFront")?"var(--ok)":"var(--mark)")+'">'+
+        (got(e,"slotFront")?"captured":"planned")+'</span></div>';
+    }).join("")+'</div>';
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+pages+run;
+}
+
+function render(){
+  var html;
+  if(view==="L") html = renderReqs()+renderEntries()+
+    '<div class="bar2"><button class="a p" id="addBtn">Add an iteration</button></div>'+
+    '<p class="note">Fill this in while you work. An entry written three days later records what you remember, '+
+    'not what happened — and the difference shows.</p>';
+  else if(view==="C") html = '<p class="lbl">What goes in the pitch, and in what order</p>'+renderOrder()+
+    '<div class="bar2" style="margin-top:12px">'+
+      '<button class="a q" id="allOn">Include everything</button>'+
+      '<button class="a q" id="byMethod">Group by method</button></div>'+
+    '<p class="note">Put next to each other the iterations you want compared, and leave out what has not earned '+
+    'its place. An edited set argues better than an exhaustive one, and the criterion says so.</p>';
+  else html = renderSheets();
+  document.getElementById("page").innerHTML = html;
+  if(view==="L") document.getElementById("addBtn").onclick = onAdd;
+  if(view==="C"){
+    document.getElementById("allOn").onclick = function(){ es.forEach(function(e){e.includeInPitch=true;}); render(); queueSave(); };
+    document.getElementById("byMethod").onclick = onGroupByMethod;
+  }
+  if(view==="S" && es.length) document.getElementById("printBtn").onclick = function(){ window.print(); };
+}
+
+/* ---------- edits ---------- */
+function setF(id,key,val){ var e=find(id); if(!e) return; e[key]=val;
+  if(key==="title"||key==="method"||key==="decision"||key==="includeInPitch"||key==="referenceId") render();
+  queueSave(); }
+function tog(id){ openId=(openId===id)?null:id; render(); }
+function cyc(id,k){ var e=find(id); if(!e) return;
+  var i=slotStates.indexOf(e[k]||"Planned"); e[k]=slotStates[(i+1)%slotStates.length]; render(); queueSave(); }
+function del(id){ if(!confirm("Delete this iteration?")) return;
+  es=es.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave(); }
+function dup(id){ var e=find(id); if(!e) return;
+  google.script.run.withSuccessHandler(function(json){
+    applyData(json);
+    var c=es[es.length-1];
+    c.title=e.title; c.session=e.session; c.method=e.method; c.referenceId=e.referenceId;
+    c.tried=e.tried; c.revealed=e.revealed; c.decision=e.decision;
+    openId=c.id; render(); queueSave();
+  }).t48_addIteration();
+}
+function mv(id,d){
+  var i=es.findIndex(function(x){return x.id===id;}); var j=i+d;
+  if(j<0||j>=es.length) return;
+  var tmp=es[i]; es[i]=es[j]; es[j]=tmp; render(); queueSave();
+}
+function onGroupByMethod(){
+  var order=[methods[0], methods[2], methods[1], ""];
+  es.sort(function(a,b){
+    var ia=order.indexOf(a.method); if(ia<0) ia=order.length;
+    var ib=order.indexOf(b.method); if(ib<0) ib=order.length;
+    return ia-ib;
+  });
+  render(); queueSave();
+}
+function onAdd(){ google.script.run.withSuccessHandler(function(json){
+  applyData(json); var last=es[es.length-1]; if(last){ openId=last.id; render(); }
+}).t48_addIteration(); }
+
+function setView(v){
+  view=v;
+  [["tabL","L"],["tabC","C"],["tabS","S"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+document.getElementById("tabL").onclick=function(){setView("L");};
+document.getElementById("tabC").onclick=function(){setView("C");};
+document.getElementById("tabS").onclick=function(){setView("S");};
+
+function applyData(json){
+  var d=JSON.parse(json);
+  meta=d.meta; es=d.iterations; refs=d.refs; methods=d.methods; decisions=d.decisions;
+  slotStates=(d.slotStates||["Planned","Captured","On the board"]).slice(0,2);
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t48_get();
+</script>
+</body>
+</html>
