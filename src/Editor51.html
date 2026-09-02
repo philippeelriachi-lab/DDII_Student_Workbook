@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 18px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:900px;margin:0 auto;padding:16px 18px 70px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:22px;
+  text-align:center;color:var(--soft);font-size:13px}
+.rounds{display:flex;border:1px solid var(--rule);margin-bottom:14px;flex-wrap:wrap}
+.rounds button{flex:1;min-width:150px;padding:10px 10px;cursor:pointer;background:#FCFDFC;
+  border:none;border-right:1px solid var(--rule);text-align:center;font-family:var(--sans)}
+.rounds button:last-child{border-right:none}
+.rounds button.on{background:var(--ink);color:#fff}
+.rounds .rn{display:block;font-size:12.5px}
+.rounds .rt{display:block;font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:2px}
+.budget{background:var(--paper);border:1px solid var(--ink);padding:12px 15px;margin-bottom:14px}
+.budget .top{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:8px}
+.budget .big{font-family:var(--mono);font-size:22px;font-weight:600}
+.budget .big.over{color:var(--mark)} .budget .big.under{color:var(--amber)} .budget .big.ok{color:var(--ok)}
+.budget .of{font-size:12px;color:var(--soft)}
+.track{height:7px;background:var(--rulesoft);overflow:hidden}
+.track .fill{height:100%;background:var(--ink)}
+.track .fill.over{background:var(--mark)}
+.budget .msg{font-size:11.5px;color:var(--soft);margin-top:8px;line-height:1.45}
+.budget .msg.warn{color:var(--mark)}
+.sec{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:8px}
+.sec.filled{border-left-color:var(--ok)} .sec.empty2{border-left-color:var(--mark)}
+.sec-head{display:flex;align-items:center;gap:9px;padding:8px 12px;border-bottom:1px solid var(--rulesoft)}
+.sec-head .n{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:18px}
+.sec-head .t{font-weight:600;font-size:13px;flex:1}
+.sec-head .mins{display:flex;align-items:center;gap:5px;flex:none}
+.sec-head .mins input{width:52px;font-family:var(--mono);font-size:11.5px;text-align:right;
+  border:1px solid var(--rule);padding:4px 5px;background:var(--input)}
+.sec-head .mins span{font-size:10.5px;color:var(--soft)}
+.sec-body{padding:10px 12px}
+.prompt{font-size:11px;color:var(--soft);margin-bottom:8px;line-height:1.4}
+.ss{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.ss{grid-template-columns:1fr}}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f textarea,.f input{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f textarea{resize:vertical;min-height:60px;line-height:1.45}
+.unres{background:var(--paper);border:1px solid var(--mark);padding:13px 15px;margin-bottom:14px}
+.unres h3{margin:0 0 3px;font-size:13px}
+.unres .why{font-size:11px;color:var(--soft);margin-bottom:8px;line-height:1.45}
+.unres textarea{width:100%;min-height:60px;font-family:var(--sans);font-size:13.5px;
+  border:1px solid var(--rule);background:#fff;padding:7px 9px;resize:vertical}
+.qrow{display:flex;gap:8px;margin-bottom:6px}
+.qrow input{flex:1;font-family:var(--sans);font-size:12.5px;border:1px solid var(--rule);
+  padding:6px 8px;background:var(--input)}
+.qrow button{font-family:var(--mono);font-size:11px;padding:5px 8px;border:1px solid var(--rule);
+  background:#fff;color:var(--soft);cursor:pointer}
+.qrow button:hover{background:var(--mark);color:#fff;border-color:var(--mark)}
+.timer{background:var(--ink);color:#fff;padding:20px;margin-bottom:12px;text-align:center}
+.timer .lbl2{font-size:11.5px;color:#8FA3AF;margin-bottom:5px}
+.timer .cur{font-size:16px;font-weight:600;margin-bottom:10px;min-height:22px}
+.timer .clock{font-family:var(--mono);font-size:40px;line-height:1;font-weight:600}
+.timer .clock.over{color:#E8836C}
+.timer .sub{font-family:var(--mono);font-size:11.5px;color:#8FA3AF;margin-top:7px}
+.timer .sub.over{color:#E8836C}
+.cue{background:var(--paper);border:1px solid var(--rule);padding:13px 15px;margin-bottom:12px;min-height:100px}
+.cue h4{margin:0 0 3px;font-size:10.5px;color:var(--soft);font-weight:500}
+.cue p{margin:0 0 10px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.cue p.blank{color:var(--soft);font-style:italic;font-size:12.5px}
+.runctl{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px}
+@media(max-width:560px){.runctl{grid-template-columns:1fr}}
+.runctl button{font-size:14px;padding:11px 8px}
+table.runs{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:9px}
+table.runs th{text-align:left;font-size:10px;color:var(--soft);font-weight:500;
+  border-bottom:1px solid var(--ink);padding:4px 7px 4px 0}
+table.runs td{padding:4px 7px 4px 0;border-bottom:1px solid var(--rulesoft)}
+table.runs td.m{font-family:var(--mono);font-size:10.5px;text-align:right}
+table.runs td.over{color:var(--mark);font-weight:600}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+button.a:disabled{opacity:.35;cursor:default}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+.cuerow{display:grid;grid-template-columns:22px 1fr 1fr 44px;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--rulesoft)}
+.cuerow .cn{font-family:var(--mono);font-size:10px;color:var(--soft);padding-top:2px}
+.cuerow .st{font-weight:600;font-size:11.5px;margin-bottom:3px}
+.cuerow .ct{font-size:9.5px;color:var(--soft);margin-bottom:2px}
+.cuerow .cv{font-size:11.5px;line-height:1.4;white-space:pre-wrap}
+.cuerow .cv.blank{color:var(--mark);font-style:italic;font-size:10.5px}
+.cuerow .cm{font-family:var(--mono);font-size:10px;color:var(--soft);text-align:right;padding-top:2px}
+.closing{border-top:2px solid var(--ink);margin-top:11px;padding-top:9px}
+.closing .l{font-size:10px;color:var(--soft);margin-bottom:3px}
+.closing .v{font-size:12.5px;line-height:1.45;white-space:pre-wrap}
+.closing .v.blank{color:var(--mark);font-style:italic;font-size:11px}
+.qlist{margin-top:11px;border-top:1px solid var(--rule);padding-top:8px}
+.qi{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:5px 0;
+  border-bottom:1px dotted var(--rule);font-size:11px}
+.qi .a{color:var(--soft)}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 51</span>
+  <h1>Technical Pitch Planner</h1>
+</div>
+<div class="tabs">
+  <button id="tabP" class="on">Plan</button>
+  <button id="tabR">Rehearse</button>
+  <button id="tabC">Cue sheet</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+
+<script>
+var meta={}, rounds={}, roundKeys=["pitch","midterm","final"], round="pitch", view="P", saveTimer=null;
+var running=false, idx=0, secStart=0, runStart=0, times=[], tick=null;
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function mmss(s){s=Math.max(0,Math.round(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function d(){ return rounds[round]; }
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+var deletedQuestionIds=[];
+function doSave(){
+  var payload={meta:meta, rounds:rounds, deletedQuestionIds:deletedQuestionIds};
+  deletedQuestionIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t51_save(JSON.stringify(payload));
+}
+
+/* ---------- plan ---------- */
+function renderRounds(){
+  return '<div class="rounds">'+roundKeys.map(function(k){
+    return '<button class="'+(round===k?"on":"")+'" onclick="setRound(\''+k+'\')">'+
+      '<span class="rn">'+esc(rounds[k].label)+'</span>'+
+      '<span class="rt">'+mmss(rounds[k].budget)+' speaking</span></button>';
+  }).join("")+'</div>';
+}
+function renderBudget(){
+  var D2=d();
+  var tot=D2.secs.reduce(function(a,s){return a+(parseInt(s.plannedSec)||0);},0);
+  var cls = tot>D2.budget?"over":(tot<D2.budget*0.75?"under":"ok");
+  var msg;
+  if(tot>D2.budget) msg='<div class="msg warn">Over by '+mmss(tot-D2.budget)+'. You will be stopped. Cut a section rather than speaking faster.</div>';
+  else if(tot<D2.budget*0.7) msg='<div class="msg">Well under. You have room — the unresolved section is usually where it is worth spending it.</div>';
+  else msg='<div class="msg">'+mmss(D2.budget-tot)+' spare. Leave some; nobody finishes early under pressure.</div>';
+  return '<div class="budget"><div class="top"><span class="big '+cls+'">'+mmss(tot)+'</span>'+
+    '<span class="of">planned, of <strong>'+mmss(D2.budget)+'</strong> speaking</span></div>'+
+    '<div class="track"><div class="fill '+(tot>D2.budget?"over":"")+'" style="width:'+Math.min(100,tot/D2.budget*100)+'%"></div></div>'+
+    msg+'</div>';
+}
+function renderSecs(){
+  var D2=d();
+  return D2.secs.map(function(s,i){
+    var filled=String(s.say||"").trim().length>0;
+    return '<div class="sec '+(filled?"filled":"empty2")+'">'+
+      '<div class="sec-head"><span class="n">'+String(i+1).padStart(2,"0")+'</span>'+
+      '<span class="t">'+esc(s.t)+'</span>'+
+      '<span class="mins"><input type="number" min="0" step="5" value="'+s.plannedSec+
+      '" oninput="setMin('+i+',this.value)"><span>sec</span></span></div>'+
+      '<div class="sec-body"><div class="prompt">'+esc(s.p)+'</div>'+
+      '<div class="ss"><div class="f"><label>What I will say</label>'+
+        '<textarea oninput="setSay('+i+',this.value)" placeholder="Notes, not a script — you will read a script and it will sound like one">'+esc(s.say)+'</textarea></div>'+
+      '<div class="f"><label>What I will show</label>'+
+        '<textarea oninput="setShow('+i+',this.value)" placeholder="The render, the fit map, the pattern, the garment">'+esc(s.show)+'</textarea></div>'+
+      '</div></div></div>';
+  }).join("");
+}
+function renderQs(){
+  var D2=d();
+  if(!D2.qs.length) return '<p class="note" style="margin:0">Nothing yet. Three is usually enough.</p>';
+  return D2.qs.map(function(q,i){
+    return '<div class="qrow">'+
+      '<input type="text" value="'+esc(q.title)+'" placeholder="Question you expect" oninput="setQ('+i+',\'title\',this.value)">'+
+      '<input type="text" value="'+esc(q.say)+'" placeholder="Your answer, in a line" oninput="setQ('+i+',\'say\',this.value)">'+
+      '<button onclick="delQ('+i+')">×</button></div>';
+  }).join("");
+}
+function renderPlan(){
+  return renderRounds()+renderBudget()+
+    '<div id="secs">'+renderSecs()+'</div>'+
+    '<div class="unres"><h3 id="unresT">'+(round==="pitch"?"What is unresolved":"What remains unresolved")+'</h3>'+
+    '<div class="why">Say this out loud. A pitch that presents everything as finished invites no useful '+
+    'feedback — the room can only help with problems you have named.</div>'+
+    '<textarea id="unresBox" placeholder="The part you know is not working yet" oninput="setUnres(this.value)">'+esc(d().unres)+'</textarea></div>'+
+    '<p class="lbl">Questions you expect</p>'+
+    '<div class="card"><div id="qs">'+renderQs()+'</div>'+
+    '<div class="bar2" style="margin:9px 0 0"><button class="a q" id="addQ">Add a question</button></div></div>'+
+    '<p class="lbl">Details</p>'+
+    '<div class="card"><div class="ss">'+
+      '<div class="f"><label>Name</label><input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+      '<div class="f"><label>Item</label><input type="text" value="'+esc(meta.item)+'" oninput="setMeta(\'item\',this.value)"></div>'+
+    '</div></div>';
+}
+
+/* ---------- rehearse ---------- */
+function renderCue(){
+  if(!running) return '<p class="blank">Your notes appear here while you rehearse.</p>';
+  var s=d().secs[idx];
+  var say=String(s.say||"").trim(), show=String(s.show||"").trim();
+  return '<h4>Say</h4><p class="'+(say?"":"blank")+'">'+(say?esc(say):"nothing planned for this section")+'</p>'+
+    '<h4>Show</h4><p class="'+(show?"":"blank")+'">'+(show?esc(show):"nothing planned")+'</p>';
+}
+function renderTimer(){
+  if(!running){
+    return '<div class="lbl2" id="tLbl">Not running</div><div class="cur" id="tCur">—</div>'+
+      '<div class="clock" id="tClock">0:00</div><div class="sub" id="tSub"></div>';
+  }
+  var D2=d(), now=performance.now(), sec=(now-secStart)/1000, tot=(now-runStart)/1000;
+  var planned=parseInt(D2.secs[idx].plannedSec)||0;
+  return '<div class="lbl2">Section '+(idx+1)+' of '+D2.secs.length+'</div>'+
+    '<div class="cur">'+esc(D2.secs[idx].t)+'</div>'+
+    '<div class="clock'+(planned&&sec>planned?" over":"")+'">'+mmss(sec)+'</div>'+
+    '<div class="sub'+(tot>D2.budget?" over":"")+'">planned '+mmss(planned)+'   total '+mmss(tot)+' of '+mmss(D2.budget)+'</div>';
+}
+function renderRuns(){
+  var D2=d();
+  var any = D2.secs.some(function(s){ return s.lastActualSec!==undefined && s.lastActualSec!==""; });
+  if(!D2.rehearsals || !any) return '<div class="empty">No rehearsals yet. Tool 54 asks whether you have practised aloud — this is where you can answer honestly.</div>';
+  var lastTotal = D2.secs.reduce(function(a,s){return a+(parseFloat(s.lastActualSec)||0);},0);
+  return '<p class="lbl">Last run</p><div class="card">'+
+    '<p style="font-family:var(--mono);font-size:11px;color:var(--soft);margin:0 0 4px">'+
+    D2.rehearsals+' rehearsal'+(D2.rehearsals===1?"":"s")+' · last run '+mmss(lastTotal)+
+    ' of '+mmss(D2.budget)+(lastTotal>D2.budget?" — over":"")+'</p>'+
+    '<table class="runs"><thead><tr><th>Section</th><th style="text-align:right">Planned</th>'+
+    '<th style="text-align:right">Actual</th></tr></thead><tbody>'+
+    D2.secs.map(function(s){
+      var t=s.lastActualSec, planned=parseInt(s.plannedSec)||0;
+      var over=t!==undefined&&t!==""&&planned&&parseFloat(t)>planned*1.15;
+      return '<tr><td>'+esc(s.t)+'</td><td class="m">'+(planned?mmss(planned):"—")+'</td>'+
+        '<td class="m '+(over?"over":"")+'">'+(t!==undefined&&t!==""?mmss(t):"—")+'</td></tr>';
+    }).join("")+'</tbody></table>'+
+    '<div class="bar2" style="margin:12px 0 0">'+
+    '<button class="a q" id="adoptBtn">Use these times as the plan</button></div></div>';
+}
+function renderRehearse(){
+  return '<div class="timer" id="timerBox">'+renderTimer()+'</div>'+
+    '<div class="cue" id="cueBox">'+renderCue()+'</div>'+
+    '<div class="runctl">'+
+      '<button class="a p" id="startBtn" '+(running?"disabled":"")+'>Start</button>'+
+      '<button class="a" id="nextBtn" '+(running?"":"disabled")+'>Next section</button>'+
+      '<button class="a q" id="stopBtn" '+(running?"":"disabled")+'>Stop</button></div>'+
+    '<p class="note">Practise aloud, standing, with your screen where it will actually be. Reading it in your '+
+    'head takes about two-thirds of the time it takes to say it.</p>'+
+    '<div id="runOut">'+renderRuns()+'</div>';
+}
+
+/* ---------- cue sheet ---------- */
+function renderSheet(){
+  var D2=d();
+  var tot=D2.secs.reduce(function(a,s){return a+(parseInt(s.plannedSec)||0);},0);
+  var unres=String(D2.unres||"").trim();
+  var qs=D2.qs.filter(function(q){return String(q.title||"").trim();});
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
+    '<div class="sheet">'+
+    '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
+    '<span class="n">Tool 51 · cue sheet</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>'+esc(D2.label)+'</span>'+
+      '<span>'+mmss(tot)+' planned of '+mmss(D2.budget)+'</span>'+
+      '<span>'+D2.rehearsals+' rehearsal'+(D2.rehearsals===1?"":"s")+'</span></div>'+
+    D2.secs.map(function(s,i){
+      var say=String(s.say||"").trim(), show=String(s.show||"").trim();
+      return '<div class="cuerow"><div class="cn">'+String(i+1).padStart(2,"0")+'</div>'+
+        '<div><div class="st">'+esc(s.t)+'</div><div class="ct">say</div>'+
+        '<div class="cv'+(say?"":" blank")+'">'+(say?esc(say):"nothing planned")+'</div></div>'+
+        '<div><div class="ct">show</div>'+
+        '<div class="cv'+(show?"":" blank")+'">'+(show?esc(show):"nothing planned")+'</div></div>'+
+        '<div class="cm">'+mmss(parseInt(s.plannedSec)||0)+'</div></div>';
+    }).join("")+
+    '<div class="closing"><div class="l">What remains unresolved — say this</div>'+
+    '<div class="v'+(unres?"":" blank")+'">'+(unres?esc(unres):"not named")+'</div></div>'+
+    (qs.length?'<div class="qlist">'+qs.map(function(q){
+      return '<div class="qi"><div>'+esc(q.title)+'</div><div class="a">'+(esc(q.say)||"—")+'</div></div>';
+    }).join("")+'</div>':'')+
+    '</div>';
+}
+
+function render(){
+  var html;
+  if(view==="P") html = renderPlan();
+  else if(view==="R") html = renderRehearse();
+  else html = renderSheet();
+  document.getElementById("page").innerHTML = html;
+  if(view==="P"){
+    document.getElementById("addQ").onclick=function(){ d().qs.push({id:"",title:"",say:""});
+      document.getElementById("qs").innerHTML=renderQs(); queueSave(); };
+  }
+  if(view==="R"){
+    document.getElementById("startBtn").onclick=startRun;
+    document.getElementById("nextBtn").onclick=nextSec;
+    document.getElementById("stopBtn").onclick=endRun;
+    var adopt=document.getElementById("adoptBtn"); if(adopt) adopt.onclick=onAdopt;
+  }
+  if(view==="C") document.getElementById("printBtn").onclick=function(){window.print();};
+}
+
+/* ---------- edits ---------- */
+function setRound(r){ if(running) endRun(); round=r; render(); }
+function setSay(i,v){ d().secs[i].say=v; queueSave(); }
+function setShow(i,v){ d().secs[i].show=v; queueSave(); }
+function setMin(i,v){ d().secs[i].plannedSec=parseInt(v)||0;
+  document.getElementById("page").querySelector(".budget").outerHTML=renderBudget(); queueSave(); }
+function setUnres(v){ d().unres=v; queueSave(); }
+function setQ(i,k,v){ d().qs[i][k]=v; queueSave(); }
+function delQ(i){ var q=d().qs[i]; if(q.id) deletedQuestionIds.push(q.id);
+  d().qs.splice(i,1); document.getElementById("qs").innerHTML=renderQs(); queueSave(); }
+function setMeta(k,v){ meta[k]=v; queueSave(); }
+function onAdopt(){
+  var D2=d();
+  D2.secs.forEach(function(s){ if(s.lastActualSec!==undefined && s.lastActualSec!=="")
+    s.plannedSec=Math.round(parseFloat(s.lastActualSec)/5)*5; });
+  render(); queueSave();
+}
+
+/* ---------- rehearsal timer ---------- */
+function startRun(){
+  running=true; idx=0; times=[]; runStart=performance.now(); secStart=runStart;
+  render();
+  tick=setInterval(function(){ if(view==="R") document.getElementById("timerBox").innerHTML=renderTimer(); },200);
+}
+function nextSec(){
+  if(!running) return;
+  var now=performance.now(); times.push((now-secStart)/1000); secStart=now; idx++;
+  if(idx>=d().secs.length){ endRun(); return; }
+  document.getElementById("timerBox").innerHTML=renderTimer();
+  document.getElementById("cueBox").innerHTML=renderCue();
+}
+function endRun(){
+  if(!running) return;
+  if(idx<d().secs.length) times.push((performance.now()-secStart)/1000);
+  running=false; clearInterval(tick);
+  var key=round, snapshot=times.slice();
+  google.script.run.withSuccessHandler(function(json){
+    var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds;
+    if(view==="R") render();
+  }).t51_recordRun(key, JSON.stringify(snapshot));
+  render();
+}
+
+function setView(v){
+  view=v;
+  [["tabP","P"],["tabR","R"],["tabC","C"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+document.getElementById("tabP").onclick=function(){setView("P");};
+document.getElementById("tabR").onclick=function(){setView("R");};
+document.getElementById("tabC").onclick=function(){setView("C");};
+
+google.script.run.withSuccessHandler(function(json){
+  var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds; render();
+}).t51_get();
+</script>
+</body>
+</html>
