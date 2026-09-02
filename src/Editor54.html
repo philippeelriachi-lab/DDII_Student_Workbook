@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.page{max-width:900px;margin:0 auto;padding:16px 18px 70px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.rounds{display:flex;border:1px solid var(--rule);margin-bottom:14px;flex-wrap:wrap}
+.rounds button{flex:1;min-width:160px;padding:10px 10px;cursor:pointer;background:#FCFDFC;border:none;
+  border-right:1px solid var(--rule);text-align:center;font-family:var(--sans)}
+.rounds button:last-child{border-right:none}
+.rounds button.on{background:var(--ink);color:#fff}
+.rounds .rn{display:block;font-size:12.5px}
+.rounds .rs{display:block;font-family:var(--mono);font-size:10.5px;opacity:.72;margin-top:2px}
+.score{background:var(--paper);border:1px solid var(--ink);padding:15px 17px;margin-bottom:14px}
+.score .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+.score .big{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1}
+.score .big.good{color:var(--ok)} .score .big.mid{color:var(--amber)} .score .big.bad{color:var(--mark)}
+.score .of{font-size:12px;color:var(--soft)}
+.track{height:7px;background:var(--rulesoft);overflow:hidden}
+.track .fill{height:100%;background:var(--ok)}
+.track .fill.mid{background:var(--amber)} .track .fill.bad{background:var(--mark)}
+.score .msg{font-size:11.5px;margin-top:10px;line-height:1.5}
+.score .msg.warn{color:var(--mark)}
+.route{background:var(--paper);border:1px solid var(--mark);margin-bottom:14px}
+.route h3{margin:0;padding:11px 15px;font-size:12.5px;color:var(--mark);border-bottom:1px solid var(--rulesoft)}
+.route .lead{padding:10px 15px 0;font-size:11.5px;color:var(--soft);line-height:1.45}
+.route .verdict{margin:11px 15px 15px;padding:12px 14px;border:1px solid;font-size:12px;line-height:1.5}
+.route .verdict.toile{border-color:var(--mark);background:#FDF6F4}
+.route .verdict.prod{border-color:var(--ok);background:#F4F9F6}
+.route .verdict b{display:block;margin-bottom:4px}
+.grp{background:var(--paper);border:1px solid var(--rule);margin-bottom:10px}
+.grp h3{margin:0;padding:10px 15px;font-size:12.5px;border-bottom:1px solid var(--rulesoft);
+  display:flex;align-items:baseline;gap:10px}
+.grp h3 .c{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--soft);font-weight:400}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:9px 15px;border-bottom:1px solid var(--rulesoft)}
+.chk:last-child{border-bottom:none}
+.chk.unmet{background:#FDF9F8}
+.chk .box{width:16px;height:16px;flex:none;margin-top:2px;border:1px solid var(--rule);background:#FCFDFC;
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;cursor:pointer}
+.chk .box.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk .box.auto{cursor:default;background:var(--rulesoft);border-color:var(--rule)}
+.chk .box.auto.on{background:var(--ok);border-color:var(--ok)}
+.chk .box.auto.off{background:#fff;border-color:var(--mark);color:var(--mark)}
+.chk .t{flex:1;font-size:13px;line-height:1.4}
+.chk .t small{display:block;color:var(--soft);font-size:11px;margin-top:2px}
+.chk .ev{font-family:var(--mono);font-size:10.5px;color:var(--soft);flex:none;text-align:right;padding-top:2px}
+.chk .ev.ok{color:var(--ok)} .chk .ev.bad{color:var(--mark)}
+.chk .tag{font-family:var(--mono);font-size:9px;padding:1px 5px;border:1px solid var(--rule);
+  color:var(--soft);flex:none;margin-top:3px}
+.chk .tag.v{border-color:var(--blue);color:var(--blue)}
+.shots{background:var(--paper);border:1px solid var(--amber);padding:12px 15px;margin-bottom:14px;
+  font-size:12.5px;line-height:1.5;color:var(--amber)}
+.shots b{font-family:var(--mono)}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f input,.f textarea,.f select{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f textarea{resize:vertical;min-height:52px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.g3{grid-template-columns:1fr}}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;box-shadow:0 1px 0 rgba(27,42,53,.08);display:none}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+.sheet h4{font-size:11px;color:var(--soft);font-weight:600;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.srow{display:flex;gap:9px;padding:4px 0;border-bottom:1px dotted var(--rule);font-size:11px;align-items:baseline}
+.srow:last-child{border-bottom:none}
+.srow .mk{font-family:var(--mono);font-size:10px;width:14px;flex:none}
+.srow .mk.y{color:var(--ok)} .srow .mk.n{color:var(--mark)}
+.srow .tx{flex:1}
+.srow .ev{font-family:var(--mono);font-size:9.5px;color:var(--soft)}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+@media print{ .rounds,.score,.grp,.route,.shots,.bar2,.lbl,.card{display:none!important} .sheet{display:block!important} }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 54</span>
+  <h1>Technical Jury Readiness</h1>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+var ROUNDS={mid:{name:"Session 11 · Midterm jury",sub:"before the route decision"},
+            fin:{name:"Final jury",sub:"before the institutional jury"}};
+var round="mid", meta={}, groups=[], shots={n:0,where:[]};
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function renderRounds(){
+  return '<div class="rounds">'+Object.keys(ROUNDS).map(function(k){
+    return '<button class="'+(round===k?"on":"")+'" onclick="setRound(\''+k+'\')">'+
+      '<span class="rn">'+ROUNDS[k].name+'</span><span class="rs">'+ROUNDS[k].sub+'</span></button>';
+  }).join("")+'</div>';
+}
+function renderScore(){
+  var tot=0, met=0, fails=[];
+  groups.forEach(function(g){ g.items.forEach(function(i){ tot++; if(i.ok) met++; if(i.crit&&!i.ok) fails.push(i.t); }); });
+  var pct=tot?Math.round(met/tot*100):0;
+  var cls=pct>=85?"good":(pct>=60?"mid":"bad");
+  var msg;
+  if(round==="mid"&&fails.length) msg='<div class="msg warn">One or more of the route criteria is not met. Whatever your design quality, this routes you to toile.</div>';
+  else if(pct>=85) msg='<div class="msg">Ready. Spend what is left on rehearsing rather than on polish.</div>';
+  else if(pct>=60) msg='<div class="msg">Close. Work down the unmet items rather than adding anything new.</div>';
+  else msg='<div class="msg">A lot of this checks itself once you have filled the other tools in.</div>';
+  return {html:'<div class="score"><div class="top"><span class="big '+cls+'">'+pct+'%</span>'+
+    '<span class="of">'+met+' of '+tot+' ready</span></div>'+
+    '<div class="track"><div class="fill '+(cls==="good"?"":cls)+'" style="width:'+pct+'%"></div></div>'+msg+'</div>',
+    fails:fails, met:met, tot:tot};
+}
+function renderRoute(fails){
+  if(round!=="mid") return "";
+  return '<div class="route"><h3>Production route — what decides it</h3>'+
+    '<div class="lead">These are assessed as readiness, not quality. Any one failing sends you to toile '+
+    'regardless of how good the design is. A toile is a legitimate outcome and often the better one.</div>'+
+    '<div class="verdict '+(fails.length?"toile":"prod")+'">'+
+    '<b>'+(fails.length?"On this evidence: toile":"On this evidence: full production")+'</b>'+
+    (fails.length? "Not met — "+fails.map(function(f){return esc(f.toLowerCase());}).join("; ")+"."
+      : "All criteria met. The panel may still decide otherwise on pattern readiness or fit evidence.")+
+    '</div></div>';
+}
+function renderShots(){
+  return shots.n
+    ? '<div class="shots"><b>'+shots.n+'</b> image'+(shots.n===1?"":"s")+' still to make — '+
+      esc(shots.where.join(", "))+'. Renders take longer than you think, and nothing here can be done on the day.</div>'
+    : "";
+}
+function renderGroups(){
+  return groups.map(function(g){
+    var met=g.items.filter(function(i){return i.ok;}).length;
+    return '<div class="grp"><h3>'+esc(g.g)+'<span class="c">'+met+' / '+g.items.length+'</span></h3>'+
+      g.items.map(function(i){
+        var box = i.mode==="auto"
+          ? '<span class="box auto '+(i.ok?"on":"off")+'">'+(i.ok?"✓":"!")+'</span>'
+          : '<span class="box '+(i.ok?"on":"")+'" onclick="tick(\''+i.id+'\')">'+(i.ok?"✓":"")+'</span>';
+        return '<div class="chk '+(i.ok?"":"unmet")+'">'+box+
+          '<span class="t">'+esc(i.t)+(i.s?'<small>'+esc(i.s)+'</small>':'')+'</span>'+
+          (i.mode==="auto"
+            ? '<span class="ev '+(i.ok?"ok":"bad")+'">'+esc(i.label)+'</span><span class="tag v">verified</span>'
+            : '<span class="tag">you say</span>')+'</div>';
+      }).join("")+'</div>';
+  }).join("");
+}
+function renderDetails(){
+  return '<p class="lbl">Your details</p><div class="card"><div class="g3">'+
+    '<div class="f"><label>Name</label><input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+    '<div class="f"><label>Group</label><select onchange="setMeta(\'group\',this.value)"><option value="">—</option>'+
+      ["A","B"].map(function(o){return '<option'+(meta.group===o?" selected":"")+'>'+o+'</option>';}).join("")+'</select></div>'+
+    '<div class="f"><label>Item</label><input type="text" value="'+esc(meta.item)+'" oninput="setMeta(\'item\',this.value)"></div></div>'+
+    '<div class="f" style="margin-top:10px"><label>What I know is not ready, and what I am doing about it</label>'+
+    '<textarea rows="3" placeholder="Name it here rather than hoping nobody asks" oninput="setMeta(\'gap\',this.value)">'+esc(meta.gap)+'</textarea></div></div>';
+}
+
+function render(){
+  var sc=renderScore();
+  document.getElementById("page").innerHTML =
+    renderRounds()+sc.html+renderRoute(sc.fails)+renderShots()+renderGroups()+renderDetails()+
+    '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>';
+  document.getElementById("printBtn").onclick=function(){ renderSheet(sc); window.print(); };
+}
+
+function renderSheet(sc){
+  var s=document.getElementById("sheet");
+  var rows = groups.map(function(g){
+    return '<h4>'+esc(g.g)+'</h4>'+g.items.map(function(i){
+      return '<div class="srow"><span class="mk '+(i.ok?"y":"n")+'">'+(i.ok?"✓":"–")+'</span>'+
+        '<span class="tx">'+esc(i.t)+'</span>'+
+        '<span class="ev">'+(i.mode==="auto"?esc(i.label)+" · verified":"self")+'</span></div>';
+    }).join("");
+  }).join("");
+  s.innerHTML = '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
+    '<span class="n">Tool 54 · readiness</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>Group '+(esc(meta.group)||"—")+'</span><span>'+esc(ROUNDS[round].name)+'</span>'+
+      '<span>'+sc.met+' of '+sc.tot+' ready</span>'+
+      (shots.n?'<span>'+shots.n+' images outstanding</span>':'')+'</div>'+
+    (round==="mid"?'<h4>Production route</h4><p style="font-size:11.5px;margin:0 0 6px;color:'+
+      (sc.fails.length?"var(--mark)":"var(--ok)")+'">'+
+      (sc.fails.length?"On this evidence: toile — "+sc.fails.map(function(f){return esc(f.toLowerCase());}).join("; ")+"."
+        :"On this evidence: full production.")+'</p>':'')+
+    rows+
+    (String(meta.gap||"").trim()?'<h4>What I know is not ready</h4><p style="font-size:11.5px;line-height:1.5;white-space:pre-wrap">'+esc(meta.gap)+'</p>':'');
+}
+
+function setRound(r){
+  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_setRound(r);
+}
+function tick(id){
+  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_toggleSelf(id);
+}
+var metaTimer=null;
+function setMeta(k,v){
+  meta[k]=v; clearTimeout(metaTimer);
+  metaTimer=setTimeout(function(){
+    google.script.run.withSuccessHandler(function(json){ applyData(json); }).t54_saveMeta(JSON.stringify({
+      name:meta.name, group:meta.group, item:meta.item, gap:meta.gap, round:round
+    }));
+  },600);
+}
+
+function applyData(json){
+  var d=JSON.parse(json);
+  round=d.round; meta=d.meta; groups=d.groups; shots=d.shots;
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_get("mid");
+</script>
+</body>
+</html>
