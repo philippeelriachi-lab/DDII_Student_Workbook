@@ -290,7 +290,7 @@ function openTool47() { showToolDialog_("Editor47", "Tool 47 · Product Page Res
 function openTool48() { showToolDialog_("Editor48", "Tool 48 · Iteration Log", 1040, 760); }
 function openTool50() { showToolDialog_("Editor50", "Tool 50 · Finishing & Hardware Spec", 1060, 780); }
 function openTool51() { showToolDialog_("Editor51", "Tool 51 · Technical Pitch Planner", 980, 760); }
-function openTool52() { showToolDialog_("Editor52", "Tool 52 · Construction Log", 480, 800); }
+function openTool52() { showToolDialog_("Editor52", "Tool 52 · Construction Log", 920, 780); }
 function openTool53() { showToolDialog_("Editor53", "Tool 53 · Revision Log", 1000, 760); }
 function openTool54() { showToolDialog_("Editor54", "Tool 54 · Technical Jury Readiness", 960, 780); }
 

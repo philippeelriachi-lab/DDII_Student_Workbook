@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45;
+  -webkit-text-size-adjust:100%}
+.masthead{background:var(--ink);color:#F2F4F1;padding:11px 16px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.masthead h1{font-size:14px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:11.5px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 14px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:12.5px;padding:8px 10px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:900px;margin:0 auto;padding:14px 16px 60px}
+.lbl{font-size:11px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:13px 15px;margin-bottom:13px}
+.note{font-size:11px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:22px;
+  text-align:center;color:var(--soft);font-size:12.5px;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+@media(max-width:600px){.g2,.g3{grid-template-columns:1fr}}
+.f{margin-bottom:9px}
+.f label{display:block;font-size:10.5px;color:var(--soft);margin-bottom:3px}
+.f label b{color:var(--mark);font-family:var(--mono)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--sans);font-size:13px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.f .hint{font-size:10px;color:var(--soft);margin-top:3px;line-height:1.35}
+.syms{display:flex;flex-wrap:wrap;gap:5px}
+.sym{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--rule);
+  background:#FCFDFC;cursor:pointer;font-size:11.5px;color:var(--soft)}
+.sym.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sym:hover{border-color:var(--ink);color:var(--ink)}
+.sym.on:hover{color:#fff}
+.step{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:7px}
+.step.bad{border-left-color:var(--mark)} .step.good{border-left-color:var(--ok)}
+.shead{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;user-select:none}
+.shead .n{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:18px}
+.shead .nm{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.shead .nm.empty{font-weight:400;font-style:italic;color:var(--soft)}
+.shead .pill{font-family:var(--mono);font-size:9.5px;padding:1px 6px;border:1px solid var(--rule);color:var(--soft);flex:none}
+.shead .ord{display:flex;gap:3px;flex:none}
+.shead .ord button{font-family:var(--mono);font-size:10.5px;padding:2px 6px;border:1px solid var(--rule);
+  background:#fff;color:var(--soft);cursor:pointer}
+.shead .ord button:hover{background:var(--ink);color:#fff}
+.shead .ord button[disabled]{opacity:.25}
+.shead .chev{font-family:var(--mono);font-size:12px;color:var(--soft);flex:none}
+.sbody{display:none;padding:4px 12px 12px;border-top:1px solid var(--rulesoft)}
+.step.open .sbody{display:block}
+.pcs{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.pc{font-size:11px;padding:4px 8px;border:1px solid var(--rule);background:#FCFDFC;cursor:pointer;color:var(--soft)}
+.pc.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.runbar{background:var(--ink);color:#fff;padding:16px 16px;margin-bottom:11px}
+.runbar.idle{background:#3A4A56}
+.runbar .l{font-size:11.5px;color:#8FA3AF;margin-bottom:4px}
+.runbar .c{font-size:16px;font-weight:600;margin-bottom:8px;min-height:22px}
+.runbar .k{font-family:var(--mono);font-size:38px;line-height:1;font-weight:600}
+.runbar .s{font-family:var(--mono);font-size:11.5px;color:#8FA3AF;margin-top:7px}
+.runbar .s b{color:#fff;font-weight:600}
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.phase{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;
+  border:1px solid var(--rule);background:var(--paper);cursor:pointer;font-size:12.5px;color:var(--soft)}
+.phase svg{width:24px;height:24px;stroke:var(--soft);fill:none;stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.phase.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.phase.on svg{stroke:#fff}
+.phase[disabled]{opacity:.32;cursor:default}
+.attempts{display:flex;border:1px solid var(--rule);margin-bottom:9px}
+.attempts label{flex:1;text-align:center;padding:9px 5px;font-size:11.5px;cursor:pointer;
+  background:#FCFDFC;border-right:1px solid var(--rule)}
+.attempts label:last-child{border-right:none}
+.attempts label.on{background:var(--ink);color:#fff}
+.probs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.prob{font-size:11.5px;padding:6px 10px;border:1px solid var(--rule);background:#FCFDFC;cursor:pointer;color:var(--soft)}
+.prob.on{background:var(--mark);color:#fff;border-color:var(--mark)}
+.runctl{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px}
+@media(max-width:480px){.runctl{grid-template-columns:1fr}}
+.runctl button{font-size:14px;padding:13px 8px}
+.qitem{display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--rule);
+  padding:10px 12px;margin-bottom:6px;cursor:pointer}
+.qitem:hover{border-color:var(--ink)}
+.qitem.done{opacity:.5;background:#F6F8F6}
+.qitem.active{border-color:var(--ink);border-width:2px}
+.qitem .n{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:20px}
+.qitem .nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qitem .nm small{display:block;color:var(--soft);font-size:10.5px}
+.qitem .tm{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.qitem .bd{font-family:var(--mono);font-size:9.5px;padding:1px 5px;border:1px solid var(--mark);color:var(--mark)}
+.qitem .ph{font-family:var(--mono);font-size:10px;color:var(--ok)}
+table.tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+table.tbl th{text-align:left;font-size:9.5px;color:var(--soft);font-weight:500;
+  border-bottom:1px solid var(--ink);padding:5px 7px 5px 0;vertical-align:bottom}
+table.tbl td{padding:5px 7px 5px 0;border-bottom:1px solid var(--rulesoft);vertical-align:top;line-height:1.35}
+table.tbl td.m{font-family:var(--mono);font-size:10.5px;text-align:right;white-space:nowrap}
+table.tbl td.dev{color:var(--mark)}
+table.tbl td input{width:52px;font-family:var(--mono);font-size:10.5px;text-align:right;
+  border:1px solid var(--rule);padding:3px 5px;background:var(--input)}
+table.tbl tr.total td{border-bottom:none;border-top:1px solid var(--ink);font-weight:600;padding-top:6px}
+.devcard{background:var(--paper);border:1px solid var(--mark);padding:12px 14px;margin-bottom:13px}
+.devcard h3{margin:0 0 5px;font-size:12.5px;color:var(--mark)}
+.devcard .d{font-size:11.5px;padding:6px 0;border-bottom:1px dotted var(--rule);line-height:1.4}
+.devcard .d:last-of-type{border-bottom:none}
+.costs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px}
+@media(max-width:600px){.costs{grid-template-columns:1fr}}
+.cbox{background:var(--paper);border:1px solid var(--ink);padding:14px 16px}
+.cbox.alt{border-color:var(--rule)}
+.cbox .l{font-size:11px;color:var(--soft);margin-bottom:5px}
+.cbox .big{font-family:var(--mono);font-size:23px;font-weight:600;line-height:1.1}
+.cbox .s{font-size:10.5px;color:var(--soft);margin-top:5px;line-height:1.4}
+.assume{background:#FBF7EC;border:1px solid var(--amber);padding:12px 14px;margin-bottom:13px;
+  font-size:11.5px;line-height:1.5}
+.assume b{color:var(--amber)}
+.bar2{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+button.a{font-family:var(--sans);font-size:12px;padding:7px 11px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+button.a:disabled{opacity:.35;cursor:default}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:18px 20px;box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 52</span>
+  <h1>Construction Log</h1>
+</div>
+<div class="tabs">
+  <button id="tabP" class="on">Plan</button>
+  <button id="tabL">Log</button>
+  <button id="tabR">Review</button>
+  <button id="tabC">Costing</button>
+  <button id="tabS">Sheet</button>
+  <button id="tabD">Details</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+
+<script>
+var SVG={
+ pin:'<svg viewBox="0 0 24 24"><path d="M4 20l7-7"/><circle cx="18" cy="6" r="2.4"/><path d="M16.3 7.7L11 13"/></svg>',
+ iron:'<svg viewBox="0 0 24 24"><path d="M3 17h15a3 3 0 0 0 3-3V9H8a5 5 0 0 0-5 5z"/><path d="M8 9V6h7"/></svg>',
+ sew:'<svg viewBox="0 0 24 24"><path d="M19 3L7 15"/><path d="M5 21c0-3 3-3 3-6"/><circle cx="18.2" cy="3.8" r="1.1"/></svg>',
+ mark:'<svg viewBox="0 0 24 24"><path d="M4 20l3-1 11-11-2-2L5 17z"/><path d="M15 6l3 3"/></svg>',
+ baste:'<svg viewBox="0 0 24 24"><path d="M3 12h3M9 12h3M15 12h3M21 12h0"/></svg>',
+ cut:'<svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.4"/><circle cx="6" cy="6" r="2.4"/><path d="M8 7l11 10M8 17L19 7"/></svg>',
+ fuse:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'
+};
+var PREP=[{k:"cut",l:"Cut",i:"cut"},{k:"mark",l:"Mark",i:"mark"},{k:"fuse",l:"Fuse",i:"fuse"},
+          {k:"pin",l:"Pin",i:"pin"},{k:"baste",l:"Baste",i:"baste"}];
+var PRESS=[{k:"set",l:"Set the seam"},{k:"open",l:"Press open"},{k:"one",l:"To one side"},
+           {k:"edge",l:"Edge press"},{k:"fusep",l:"Press and fuse"}];
+var PHASES=[{k:"prep",l:"Prep",i:"pin"},{k:"sew",l:"Sew",i:"sew"},{k:"press",l:"Press",i:"iron"}];
+var SHIRT_PCS=["Front left","Front right","Back","Yoke outer","Yoke inner","Sleeve left","Sleeve right",
+  "Collar","Collar stand","Cuff left","Cuff right","Placket","Pocket"];
+var SHIRT_SEQ=[
+ ["Front edges","Attachment",["Front left","Front right","Placket"],["fuse","mark","pin"],["edge"]],
+ ["Pocket","Topstitched",["Pocket","Front left"],["mark","pin"],["edge"]],
+ ["Yoke to back","Plain",["Back","Yoke outer","Yoke inner"],["pin"],["set","one"]],
+ ["Yoke to fronts","Plain",["Yoke outer","Front left","Front right"],["pin"],["set","one"]],
+ ["Collar","Edge-stitched",["Collar"],["fuse","mark","pin"],["edge"]],
+ ["Collar stand to collar","Plain",["Collar","Collar stand"],["pin"],["set"]],
+ ["Collar to neckline","Attachment",["Collar stand","Yoke outer"],["mark","pin"],["set"]],
+ ["Sleeve to armhole","Flat-felled",["Sleeve left","Sleeve right","Front left","Back"],["pin"],["set","one"]],
+ ["Side and underarm","Flat-felled",["Front left","Back","Sleeve left"],["pin"],["set","one"]],
+ ["Cuffs","Attachment",["Cuff left","Cuff right","Sleeve left","Sleeve right"],["fuse","pin"],["edge"]],
+ ["Hem","Hem",["Front left","Front right","Back"],["pin"],["edge"]],
+ ["Buttonholes","Buttonhole",["Placket","Cuff left","Collar stand"],["mark"],[]],
+ ["Buttons","Button",["Front right","Cuff left","Collar stand"],["mark"],["edge"]]
+];
+
+var meta={}, pieces=[], steps=[], seamTypes=[], attempts=[], problems=[];
+var openId=null, view="P", saveTimer=null, deletedIds=[];
+var active=null, phase=null, phaseStart=0, tick=null, nudged=false;
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function mmss(s){s=Math.max(0,Math.round(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function fmtMin(s){var m=s/60; return m<10?m.toFixed(1):Math.round(m);}
+function total(s){return s.prepSec+s.sewSec+s.pressSec;}
+function findS(id){ for(var i=0;i<steps.length;i++) if(steps[i].id===id) return steps[i]; return null; }
+function missS(s){var m=0; if(!String(s.location||"").trim())m++; if(!s.operation)m++; if(!s.pieces.length)m++; return m;}
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function doSave(){
+  var payload={meta:meta, pieces:pieces, steps:steps, deletedIds:deletedIds};
+  deletedIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t52_save(JSON.stringify(payload));
+}
+
+/* ---------- plan ---------- */
+function renderSteps(){
+  if(!steps.length) return '<div class="empty">No steps yet. Build from your Tool 50 finishing schedule, or start with a standard shirt sequence and change it to match what you have actually made.</div>';
+  return steps.map(function(s,i){
+    var bad=missS(s), open=s.id===openId;
+    return '<div class="step '+(open?"open ":"")+(bad?"bad":"good")+'">'+
+      '<div class="shead" onclick="tog(\''+s.id+'\')">'+
+        '<span class="n">'+String(i+1).padStart(2,"0")+'</span>'+
+        '<span class="nm'+(s.location?"":" empty")+'">'+(esc(s.location)||"Untitled step")+'</span>'+
+        (s.operation?'<span class="pill">'+esc(s.operation)+'</span>':'')+
+        '<span class="ord"><button onclick="event.stopPropagation();mv(\''+s.id+'\',-1)" '+(i===0?"disabled":"")+'>↑</button>'+
+        '<button onclick="event.stopPropagation();mv(\''+s.id+'\',1)" '+(i===steps.length-1?"disabled":"")+'>↓</button></span>'+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="sbody">'+
+        '<div class="g2">'+
+          '<div class="f"><label>Where on the garment <b>•</b></label>'+
+            '<input type="text" value="'+esc(s.location)+'" placeholder="Side seam / collar stand" '+
+            'oninput="setS(\''+s.id+'\',\'location\',this.value)"></div>'+
+          '<div class="f"><label>Seam or operation <b>•</b></label>'+
+            '<select onchange="setS(\''+s.id+'\',\'operation\',this.value)"><option value="">—</option>'+
+            seamTypes.map(function(o){return '<option'+(s.operation===o?" selected":"")+'>'+o+'</option>';}).join("")+
+            '</select></div></div>'+
+        '<div class="f"><label>Pieces joined <b>•</b></label><div class="pcs">'+
+          (pieces.length?pieces:["Add pieces under Details"]).map(function(p){
+            return '<span class="pc'+(s.pieces.indexOf(p)>=0?" on":"")+'" onclick="tickPc(\''+s.id+'\',\''+
+              esc(p).replace(/'/g,"\\'")+'\')">'+esc(p)+'</span>';}).join("")+'</div></div>'+
+        '<div class="f"><label>Preparation</label><div class="syms">'+
+          PREP.map(function(o){return '<span class="sym'+(s.prep.indexOf(o.k)>=0?" on":"")+
+            '" onclick="tickSym(\''+s.id+'\',\'prep\',\''+o.k+'\')">'+SVG[o.i]+'<span>'+o.l+'</span></span>';}).join("")+
+          '</div></div>'+
+        '<div class="f"><label>Pressing</label><div class="syms">'+
+          PRESS.map(function(o){return '<span class="sym'+(s.press.indexOf(o.k)>=0?" on":"")+
+            '" onclick="tickSym(\''+s.id+'\',\'press\',\''+o.k+'\')">'+SVG.iron+'<span>'+o.l+'</span></span>';}).join("")+
+          '</div></div>'+
+        '<div class="g2">'+
+          '<div class="f"><label>Thread</label><input type="text" value="'+esc(s.thread)+
+            '" oninput="setS(\''+s.id+'\',\'thread\',this.value)"></div>'+
+          '<div class="f mono"><label>Machine and settings</label><input type="text" value="'+esc(s.settings)+
+            '" placeholder="Lockstitch, 3.0 mm, 90/14" oninput="setS(\''+s.id+'\',\'settings\',this.value)"></div>'+
+        '</div>'+
+        '<div class="bar2" style="margin:6px 0 0">'+
+          '<button class="a q" onclick="dupS(\''+s.id+'\')">Duplicate</button>'+
+          '<button class="a q d" onclick="delS(\''+s.id+'\')">Delete</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- log ---------- */
+function renderRunbar(){
+  var s=findS(active);
+  if(!s) return '<div class="l">Nothing running</div><div class="c">Tap a step below to start</div><div class="k">0:00</div><div class="s"></div>';
+  var live=phase?(performance.now()-phaseStart)/1000:0;
+  var t={prep:s.prepSec,sew:s.sewSec,press:s.pressSec};
+  if(phase) t[phase]+=live;
+  return '<div class="l">'+(phase?PHASES.filter(function(p){return p.k===phase;})[0].l+" running":"Paused")+'</div>'+
+    '<div class="c">'+(esc(s.location)||"Untitled step")+'</div>'+
+    '<div class="k">'+mmss(t.prep+t.sew+t.press)+'</div>'+
+    '<div class="s">prep <b>'+mmss(t.prep)+'</b>&nbsp;&nbsp;sew <b>'+mmss(t.sew)+'</b>&nbsp;&nbsp;press <b>'+mmss(t.press)+'</b></div>';
+}
+function renderPhases(){
+  return PHASES.map(function(p){
+    return '<button class="phase'+(phase===p.k?" on":"")+'" '+(active?"":"disabled")+
+      ' onclick="switchPhase(\''+p.k+'\')">'+SVG[p.i]+'<span>'+p.l+'</span></button>';
+  }).join("");
+}
+function renderAtt(){
+  var s=findS(active);
+  var att = attempts.map(function(a){
+    return '<label class="'+(s&&s.attempt===a?"on":"")+'" onclick="'+(s?"setAtt('"+esc(a)+"')":"")+'">'+esc(a)+'</label>';
+  }).join("");
+  var pr = problems.map(function(p){
+    return '<span class="prob'+(s&&s.problems.indexOf(p)>=0?" on":"")+'" onclick="'+
+      (s?"tickProb('"+esc(p)+"')":"")+'">'+esc(p)+'</span>';
+  }).join("");
+  return {att:att, prob:pr};
+}
+function renderQueue(){
+  if(!steps.length) return '<div class="empty">Nothing planned. Go to Plan first.</div>';
+  return steps.map(function(s){
+    var t=total(s);
+    return '<div class="qitem '+(s.id===active?"active ":"")+((s.endedAt&&s.id!==active)?"done":"")+
+      '" onclick="startStep(\''+s.id+'\')">'+
+      '<span class="n">'+(s.actualOrder?String(s.actualOrder).padStart(2,"0"):"—")+'</span>'+
+      '<span class="nm">'+(esc(s.location)||"Untitled")+'<small>'+(esc(s.operation)||"—")+
+        (s.unplanned?" · unplanned":"")+'</small></span>'+
+      (s.photos?'<span class="ph">'+s.photos+' ■</span>':'')+
+      (s.problems.length?'<span class="bd">'+s.problems.length+'</span>':'')+
+      '<span class="tm">'+(t?fmtMin(t)+" min":"")+'</span></div>';
+  }).join("");
+}
+function renderLog(){
+  return '<div class="runbar'+(active?"":" idle")+'" id="runbar">'+renderRunbar()+'</div>'+
+    '<div class="phases" id="phases">'+renderPhases()+'</div>'+
+    (function(){ var a=renderAtt(); return '<div class="attempts" id="attempts">'+a.att+'</div><div class="probs" id="probs">'+a.prob+'</div>'; })()+
+    '<div class="runctl">'+
+      '<button class="a" id="photoBtn" '+(active?"":"disabled")+'>Photo taken</button>'+
+      '<button class="a p" id="doneBtn" '+(active?"":"disabled")+'>Finish this step</button></div>'+
+    '<p class="lbl">Steps</p><div id="queue">'+renderQueue()+'</div>'+
+    '<div class="bar2" style="margin-top:11px"><button class="a q" id="addUnplanned">Add a step that was not planned</button></div>';
+}
+
+/* ---------- review ---------- */
+function renderReview(){
+  var logged=steps.filter(function(s){return s.actualOrder;}).sort(function(a,b){return a.actualOrder-b.actualOrder;});
+  var devs=[];
+  logged.forEach(function(s){
+    var planned=steps.indexOf(s)+1;
+    if(planned!==s.actualOrder) devs.push('<div class="d"><b>'+esc(s.location)+'</b> — planned as step '+planned+
+      ', actually done '+s.actualOrder+(s.actualOrder<planned?" (earlier)":" (later)")+'.</div>');
+  });
+  steps.filter(function(s){return s.unplanned;}).forEach(function(s){
+    devs.push('<div class="d"><b>'+esc(s.location)+'</b> — not in the plan at all.</div>');});
+  steps.filter(function(s){return s.attempt==="Redoing a mistake";}).forEach(function(s){
+    devs.push('<div class="d"><b>'+esc(s.location)+'</b> — redone after a mistake.</div>');});
+  steps.filter(function(s){return s.problems.length;}).forEach(function(s){
+    devs.push('<div class="d"><b>'+esc(s.location)+'</b> — problem: '+s.problems.map(esc).join(", ")+'.</div>');});
+  steps.filter(function(s){return !s.actualOrder;}).forEach(function(s){
+    devs.push('<div class="d"><b>'+esc(s.location)+'</b> — planned but never logged.</div>');});
+
+  var devHtml = devs.length
+    ? '<div class="devcard"><h3>'+devs.length+' thing'+(devs.length===1?"":"s")+' went differently from the plan</h3>'+
+      devs.join("")+'<p class="note" style="margin-top:9px;color:var(--ink)">Each of these is a revision log entry '+
+      'in Session 16. Where the plan and the garment disagreed is where the pattern or the spec was wrong.</p></div>'
+    : '<div class="empty">No deviations recorded yet.</div>';
+
+  var tot=steps.reduce(function(a,s){return a+total(s);},0);
+  var table='<table class="tbl"><thead><tr>'+
+    '<th>Plan</th><th>Step</th><th style="text-align:right">Actual</th>'+
+    '<th style="text-align:right">Prep</th><th style="text-align:right">Sew</th>'+
+    '<th style="text-align:right">Press</th><th style="text-align:right">Total</th>'+
+    '<th style="text-align:right">Attempt</th></tr></thead><tbody>'+
+    steps.map(function(s,i){
+      return '<tr><td class="m">'+(i+1)+'</td><td>'+(esc(s.location)||"Untitled")+
+        (s.unplanned?' <span style="color:var(--mark);font-size:9.5px">unplanned</span>':'')+'</td>'+
+        '<td class="m">'+(s.actualOrder||"—")+'</td>'+
+        [["prepSec","prep"],["sewSec","sew"],["pressSec","press"]].map(function(p){
+          return '<td class="m"><input type="number" min="0" step="0.5" value="'+(s[p[0]]/60).toFixed(1)+
+            '" oninput="setTime(\''+s.id+'\',\''+p[0]+'\',this.value)"></td>';}).join("")+
+        '<td class="m">'+fmtMin(total(s))+'</td>'+
+        '<td class="m '+(s.attempt==="Redoing a mistake"?"dev":"")+'">'+esc(s.attempt)+'</td></tr>';
+    }).join("")+
+    '<tr class="total"><td></td><td>Hands-on total</td><td colspan="4"></td>'+
+    '<td class="m">'+fmtMin(tot)+' min</td><td></td></tr></tbody></table>';
+  return devHtml+'<p class="lbl">Times — correct anything that ran while you were not working</p>'+
+    '<div class="card">'+table+'</div>'+
+    '<p class="note">A timer left running over lunch produces a four-hour buttonhole. Fix it here — the costing '+
+    'is only worth something if the minutes are true.</p>';
+}
+
+/* ---------- costing ---------- */
+function renderCost(){
+  var rate=parseFloat(meta.rate);
+  var tot=steps.reduce(function(a,s){return a+total(s);},0);
+  if(!tot) return '<div class="empty">Nothing logged yet.</div>';
+  if(!isFinite(rate)||rate<=0) return '<div class="empty">Set a labour rate under Details — with its basis and source — and the costing appears here.</div>';
+  var curve=meta.curve, prod=0, redo=0;
+  steps.forEach(function(s){ var t=total(s);
+    if(s.attempt==="Redoing a mistake"){ redo+=t; return; }
+    prod += (s.attempt==="First time") ? t*curve : t; });
+  var ph={prep:0,sew:0,press:0};
+  steps.forEach(function(s){ ph.prep+=s.prepSec; ph.sew+=s.sewSec; ph.press+=s.pressSec; });
+  var lead="";
+  if(meta.lead){
+    var st=steps.filter(function(s){return s.startedAt;}).map(function(s){return new Date(s.startedAt).getTime();});
+    var en=steps.filter(function(s){return s.endedAt;}).map(function(s){return new Date(s.endedAt).getTime();});
+    if(st.length&&en.length){
+      var el=(Math.max.apply(null,en)-Math.min.apply(null,st))/1000;
+      lead='<div class="cbox alt"><div class="l">Lead time, first stitch to last</div>'+
+        '<div class="big">'+(el/3600).toFixed(1)+' h</div>'+
+        '<div class="s">Hands-on was '+(tot/3600).toFixed(1)+' h — '+Math.round(tot/el*100)+
+        '% of elapsed. The rest is waiting. Lead time is what you promise a client; hands-on is what you charge them.</div></div>';
+    }
+  }
+  return '<div class="assume"><b>Rate:</b> '+rate+' '+esc(meta.currency)+' per hour · '+
+    (esc(meta.basis)||"basis not stated")+' · '+(esc(meta.rateSource)||"source not stated")+'<br>'+
+    '<b>The production estimate assumes</b> first attempts would take '+Math.round(curve*100)+
+    '% as long once learned, and excludes redos entirely. That percentage is an assumption, not a fact.</div>'+
+    '<div class="costs">'+
+      '<div class="cbox"><div class="l">Labour, as you built it</div>'+
+      '<div class="big">'+(tot/3600*rate).toFixed(2)+' '+esc(meta.currency)+'</div>'+
+      '<div class="s">'+fmtMin(tot)+' minutes hands-on. What your sample cost in labour, including learning to make it.</div></div>'+
+      '<div class="cbox alt"><div class="l">Labour, production estimate</div>'+
+      '<div class="big">'+(prod/3600*rate).toFixed(2)+' '+esc(meta.currency)+'</div>'+
+      '<div class="s">'+fmtMin(prod)+' minutes. What a second one might take.'+
+      (redo?' Excludes '+fmtMin(redo)+' minutes of redone work.':'')+'</div></div>'+
+      lead+
+    '</div>'+
+    '<div class="card"><p class="lbl" style="border:none;margin-bottom:7px">Where the time went</p>'+
+    '<table class="tbl"><tbody>'+
+      [["Preparation — cutting, marking, fusing, pinning","prep"],["Sewing","sew"],["Pressing","press"]]
+      .map(function(r){
+        return '<tr><td>'+r[0]+'</td><td class="m">'+fmtMin(ph[r[1]])+' min</td>'+
+          '<td class="m">'+Math.round(ph[r[1]]/tot*100)+'%</td></tr>';}).join("")+
+    '</tbody></table>'+
+    '<p class="note" style="margin-top:9px">If sewing is under half your time, that is normal and worth '+
+    'saying at the jury. Most of making a shirt is not sewing it.</p></div>'+
+    '<div class="card"><div class="f" style="max-width:260px;margin:0"><label>Learning-curve assumption</label>'+
+    '<input type="number" min="10" max="100" step="5" id="curveIn" value="'+Math.round(curve*100)+'">'+
+    '<div class="hint">Per cent of your first-attempt time a practised maker would need.</div></div></div>';
+}
+
+/* ---------- sheet ---------- */
+function renderSheet(){
+  var rate=parseFloat(meta.rate);
+  var tot=steps.reduce(function(a,s){return a+total(s);},0);
+  var rows=steps.slice().sort(function(a,b){return (a.actualOrder||99)-(b.actualOrder||99);}).map(function(s){
+    var p=s.prep.map(function(k){return (PREP.filter(function(o){return o.k===k;})[0]||{}).l;}).filter(Boolean).join(", ");
+    var pr=s.press.map(function(k){return (PRESS.filter(function(o){return o.k===k;})[0]||{}).l;}).filter(Boolean).join(", ");
+    return '<tr><td class="m">'+(s.actualOrder||"—")+'</td>'+
+      '<td>'+(esc(s.location)||"Untitled")+(s.unplanned?'<br><span style="color:var(--mark);font-size:9.5px">not planned</span>':'')+'</td>'+
+      '<td>'+esc(s.operation)+'</td><td>'+s.pieces.map(esc).join(", ")+'</td>'+
+      '<td>'+(esc(p)||"—")+'</td><td>'+(esc(pr)||"—")+'</td>'+
+      '<td>'+(esc(s.settings)||"—")+'</td>'+
+      '<td class="m">'+(total(s)?fmtMin(total(s)):"—")+'</td>'+
+      '<td>'+s.problems.map(esc).join(", ")+(s.attempt==="Redoing a mistake"?" redone":"")+
+      (s.photos?' <span style="color:var(--ok)">'+s.photos+' photos</span>':'')+'</td></tr>';
+  }).join("");
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
+    '<div class="sheet">'+
+    '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
+    '<span class="n">Tool 52 · construction log</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>'+(esc(meta.route)||"route not set")+'</span>'+
+      '<span>'+steps.length+' steps · '+fmtMin(tot)+' min hands-on</span>'+
+      (isFinite(rate)&&rate>0?'<span>'+(tot/3600*rate).toFixed(2)+' '+esc(meta.currency)+' labour</span>':'')+
+    '</div>'+
+    (isFinite(rate)&&rate>0?'<p style="font-size:10px;color:var(--soft);margin:0 0 11px">Rate '+rate+' '+
+      esc(meta.currency)+'/hr — '+(esc(meta.basis)||"basis not stated")+', '+
+      (esc(meta.rateSource)||"source not stated")+'.</p>':'')+
+    '<table class="tbl"><thead><tr><th style="width:5%">#</th><th style="width:15%">Location</th>'+
+    '<th style="width:10%">Operation</th><th style="width:16%">Pieces</th><th style="width:12%">Prep</th>'+
+    '<th style="width:12%">Press</th><th style="width:12%">Settings</th>'+
+    '<th style="width:6%;text-align:right">Min</th><th style="width:12%">Notes</th></tr></thead><tbody>'+
+    rows+'</tbody></table></div>';
+}
+
+/* ---------- details ---------- */
+function renderDetails(){
+  return '<p class="lbl">Your details</p>'+
+    '<div class="card"><div class="g3">'+
+      '<div class="f"><label>Name</label><input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+      '<div class="f"><label>Item</label><input type="text" value="'+esc(meta.item)+'" oninput="setMeta(\'item\',this.value)"></div>'+
+      '<div class="f"><label>Route</label><select onchange="setMeta(\'route\',this.value)"><option value="">—</option>'+
+        ["Full production","Toile"].map(function(o){return '<option'+(meta.route===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div>'+
+    '</div></div>'+
+    '<p class="lbl">Labour rate</p>'+
+    '<div class="card"><p class="note" style="margin-bottom:10px">You research this and you defend it. A rate without a basis is '+
+      'a guess, and the product juror will ask.</p>'+
+    '<div class="g3">'+
+      '<div class="f mono"><label>Rate per hour <b>•</b></label><input type="text" value="'+esc(meta.rate)+'" placeholder="15" oninput="setMeta(\'rate\',this.value)"></div>'+
+      '<div class="f"><label>Currency</label><select onchange="setMeta(\'currency\',this.value)">'+
+        ["USD","LBP","EUR"].map(function(o){return '<option'+(meta.currency===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div>'+
+      '<div class="f"><label>Basis <b>•</b></label><select onchange="setMeta(\'basis\',this.value)"><option value="">—</option>'+
+        ["Local tailor day rate","Sample room quote","Minimum wage equivalent","Factory line rate","Independent maker rate","Other"]
+        .map(function(o){return '<option'+(meta.basis===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div>'+
+    '</div>'+
+    '<div class="f" style="margin:0"><label>Source <b>•</b></label>'+
+      '<input type="text" value="'+esc(meta.rateSource)+'" placeholder="Who you asked, where you found it, when" oninput="setMeta(\'rateSource\',this.value)">'+
+      '<div class="hint">This prints alongside every figure. A number cannot travel without its assumption.</div></div></div>'+
+    '<p class="lbl">Pattern pieces</p>'+
+    '<div class="card"><div class="f"><label>One per line</label>'+
+      '<textarea id="piecesBox" rows="6" placeholder="Front left&#10;Front right&#10;Back&#10;…">'+esc(pieces.join("\n"))+'</textarea></div>'+
+    '<div class="bar2" style="margin:0">'+
+      '<button class="a p" id="savePcs">Save pieces</button>'+
+      '<button class="a q" id="shirtPcs">Use standard shirt pieces</button></div></div>'+
+    '<p class="lbl">Options</p>'+
+    '<div class="card"><label style="display:flex;gap:8px;align-items:center;font-size:12.5px;cursor:pointer">'+
+      '<input type="checkbox" id="leadTog" '+(meta.lead?"checked":"")+' style="width:16px;height:16px">'+
+      'Show lead time as well as hands-on time</label>'+
+    '<p class="note" style="margin:7px 0 0">Hands-on minutes are what you price. Lead time includes waiting for '+
+    'a machine, for an iron, for something you had run out of. Only one of them is labour.</p></div>';
+}
+
+function render(){
+  var html;
+  if(view==="P") html = renderSteps()+'<div class="bar2">'+
+      '<button class="a p" id="addStep">Add a step</button>'+
+      '<button class="a q" id="fromSpec">Build from Tool 50</button>'+
+      '<button class="a q" id="shirtSeq">Standard shirt sequence</button></div>';
+  else if(view==="L") html = renderLog();
+  else if(view==="R") html = renderReview();
+  else if(view==="C") html = renderCost();
+  else if(view==="S") html = renderSheet();
+  else html = renderDetails();
+  document.getElementById("page").innerHTML = html;
+  wireView();
+}
+function wireView(){
+  if(view==="P"){
+    document.getElementById("addStep").onclick=function(){ google.script.run.withSuccessHandler(function(json){
+      applyData(json); var last=steps[steps.length-1]; if(last){ openId=last.id; render(); } }).t52_addStep(); };
+    document.getElementById("fromSpec").onclick=function(){ google.script.run.withSuccessHandler(function(json){
+      var d=JSON.parse(json); applyData(json); render();
+      alert((d.added||0)+" operation"+(d.added===1?"":"s")+" brought in from Tool 50.");
+    }).t52_fromFinishing(); };
+    document.getElementById("shirtSeq").onclick=onShirtSeq;
+  }
+  if(view==="L"){
+    document.getElementById("photoBtn").onclick=onPhoto;
+    document.getElementById("doneBtn").onclick=finishStep;
+    document.getElementById("addUnplanned").onclick=onAddUnplanned;
+  }
+  if(view==="C"){
+    var ci=document.getElementById("curveIn");
+    if(ci) ci.onchange=function(){ meta.curve=Math.min(1,Math.max(.1,(parseInt(ci.value)||60)/100)); render(); queueSave(); };
+  }
+  if(view==="S" && steps.length) document.getElementById("printBtn").onclick=function(){window.print();};
+  if(view==="D"){
+    document.getElementById("savePcs").onclick=function(){
+      pieces=document.getElementById("piecesBox").value.split("\n").map(function(x){return x.trim();}).filter(Boolean);
+      queueSave(); };
+    document.getElementById("shirtPcs").onclick=function(){
+      pieces=SHIRT_PCS.slice(); document.getElementById("piecesBox").value=pieces.join("\n"); queueSave(); };
+    document.getElementById("leadTog").onchange=function(){ meta.lead=this.checked; queueSave(); };
+  }
+}
+
+/* ---------- edits: plan ---------- */
+function setS(id,key,val){ var s=findS(id); if(!s) return; s[key]=val;
+  if(key==="location"||key==="operation") render(); queueSave(); }
+function tickPc(id,p){ var s=findS(id); if(!s) return;
+  var i=s.pieces.indexOf(p); if(i<0) s.pieces.push(p); else s.pieces.splice(i,1); render(); queueSave(); }
+function tickSym(id,which,v){ var s=findS(id); if(!s) return;
+  var a=s[which], i=a.indexOf(v); if(i<0) a.push(v); else a.splice(i,1); render(); queueSave(); }
+function tog(id){ openId=(openId===id)?null:id; render(); }
+function delS(id){ if(!confirm("Delete this step?")) return;
+  if(active===id){active=null;phase=null;}
+  steps=steps.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave(); }
+function dupS(id){
+  var s=findS(id); if(!s) return;
+  google.script.run.withSuccessHandler(function(json){
+    applyData(json);
+    var c=steps[steps.length-1];
+    ["location","operation","thread","settings"].forEach(function(k){ c[k]=s[k]; });
+    c.pieces=s.pieces.slice(); c.prep=s.prep.slice(); c.press=s.press.slice();
+    openId=c.id; render(); queueSave();
+  }).t52_addStep();
+}
+function mv(id,dir){ var i=steps.findIndex(function(x){return x.id===id;}); var j=i+dir;
+  if(j<0||j>=steps.length) return; var t=steps[i]; steps[i]=steps[j]; steps[j]=t; render(); queueSave(); }
+function onShirtSeq(){
+  if(!pieces.length){ pieces=SHIRT_PCS.slice(); queueSave(); }
+  var payload=SHIRT_SEQ.map(function(r){
+    return {location:r[0], operation:r[1], pieces:r[2], prep:r[3], press:r[4]};
+  });
+  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); })
+    .t52_addSteps(JSON.stringify(payload));
+}
+
+/* ---------- edits: log ---------- */
+function startStep(id){
+  if(active===id) return;
+  if(active&&phase) pausePhase();
+  active=id; phase=null;
+  var s=findS(id);
+  if(!s.actualOrder) s.actualOrder=steps.filter(function(x){return x.actualOrder;}).length+1;
+  if(!s.startedAt) s.startedAt=new Date().toISOString();
+  switchPhase("prep");
+}
+function switchPhase(k){
+  if(!active) return;
+  var s=findS(active); var now=performance.now();
+  if(phase) s[phase+"Sec"]+=(now-phaseStart)/1000;
+  phase=(phase===k)?null:k; phaseStart=now;
+  render(); queueSave();
+}
+function pausePhase(){
+  if(!active||!phase) return;
+  var s=findS(active); s[phase+"Sec"]+=(performance.now()-phaseStart)/1000; phase=null; queueSave();
+}
+function finishStep(){
+  if(!active) return;
+  pausePhase();
+  var s=findS(active); s.endedAt=new Date().toISOString();
+  active=null; phase=null; render(); queueSave();
+}
+function onPhoto(){ var s=findS(active); if(!s) return; s.photos++; render(); queueSave(); }
+function setAtt(a){ var s=findS(active); if(s){ s.attempt=a; render(); queueSave(); } }
+function tickProb(p){ var s=findS(active); if(!s) return;
+  var i=s.problems.indexOf(p); if(i<0) s.problems.push(p); else s.problems.splice(i,1); render(); queueSave(); }
+function onAddUnplanned(){
+  google.script.run.withSuccessHandler(function(json){
+    applyData(json);
+    var s=steps[steps.length-1]; s.unplanned=true; s.location="Unplanned step";
+    startStep(s.id); queueSave();
+  }).t52_addStep(JSON.stringify({unplanned:true,location:"Unplanned step"}));
+}
+
+/* ---------- edits: review/costing/details ---------- */
+function setTime(id,key,v){ var s=findS(id); if(s){ s[key]=Math.max(0,(parseFloat(v)||0)*60); queueSave(); } }
+function setMeta(k,v){ meta[k]=v; render(); queueSave(); }
+
+/* long-run nudge — checked once a minute while a phase is running */
+setInterval(function(){
+  if(!active||!phase) return;
+  if((performance.now()-phaseStart)/1000>45*60 && !nudged){
+    nudged=true;
+    if(!confirm("This step has been running 45 minutes. Still working on it?\n\nCancel stops the clock now — you can correct the time under Review.")){
+      pausePhase(); render();
+    }
+    nudged=false;
+  }
+},60000);
+tick=setInterval(function(){ if(view==="L" && document.getElementById("runbar")){
+  document.getElementById("runbar").innerHTML=renderRunbar(); document.getElementById("runbar").className="runbar"+(active?"":" idle"); } },500);
+
+function setView(v){
+  view=v;
+  [["tabP","P"],["tabL","L"],["tabR","R"],["tabC","C"],["tabS","S"],["tabD","D"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+["P","L","R","C","S","D"].forEach(function(v){ document.getElementById("tab"+v).onclick=function(){setView(v);}; });
+
+function applyData(json){
+  var d=JSON.parse(json);
+  meta=d.meta; pieces=d.pieces; steps=d.steps;
+  seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t52_get();
+</script>
+</body>
+</html>
