@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 18px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:960px;margin:0 auto;padding:16px 18px 70px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:22px;
+  text-align:center;color:var(--soft);font-size:13px;margin-bottom:12px}
+.count{background:var(--paper);border:1px solid var(--ink);padding:14px 17px;margin-bottom:14px}
+.count .big{font-family:var(--mono);font-size:27px;font-weight:600;line-height:1}
+.count .l{font-size:12px;color:var(--soft);margin-top:5px}
+.count .msg{font-size:11.5px;margin-top:10px;padding-top:9px;border-top:1px solid var(--rule);line-height:1.5}
+.count .msg.warn{color:var(--mark)} .count .msg.good{color:var(--ok)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:660px){.g2,.g3{grid-template-columns:1fr}}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f label b{color:var(--mark);font-family:var(--mono)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f textarea{resize:vertical;min-height:52px;line-height:1.45}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.f .hint{font-size:10.5px;color:var(--soft);margin-top:3px;line-height:1.35}
+.ent{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:8px}
+.ent.bad{border-left-color:var(--mark)} .ent.good{border-left-color:var(--ok)}
+.ehead{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;user-select:none}
+.ehead .n{font-family:var(--mono);font-size:11px;color:var(--soft);min-width:18px}
+.ehead .nm{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.ehead .nm.empty{font-weight:400;font-style:italic;color:var(--soft)}
+.ehead .pill{font-family:var(--mono);font-size:10px;padding:1px 6px;border:1px solid var(--rule);color:var(--soft);flex:none}
+.ehead .d{font-family:var(--mono);font-size:11px;flex:none}
+.ehead .d.plus{color:var(--mark)} .ehead .d.minus{color:var(--blue)} .ehead .d.zero{color:var(--ok)}
+.ehead .chev{font-family:var(--mono);font-size:12px;color:var(--soft);flex:none}
+.ebody{display:none;padding:4px 12px 12px;border-top:1px solid var(--rulesoft)}
+.ent.open .ebody{display:block}
+.pvo{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);margin-bottom:11px}
+@media(max-width:600px){.pvo{grid-template-columns:1fr}}
+.pvo > div{padding:11px 12px}
+.pvo > div:first-child{border-right:1px solid var(--rule);background:#F7FAFC}
+.pvo > div:last-child{background:#FCF8F6}
+@media(max-width:600px){.pvo > div:first-child{border-right:none;border-bottom:1px solid var(--rule)}}
+.pvo h4{margin:0 0 6px;font-size:11px;color:var(--soft);font-weight:600}
+.pvo h4 .tag{font-family:var(--mono);font-size:9.5px;padding:1px 5px;border:1px solid currentColor;margin-left:5px}
+.pvo textarea{width:100%;min-height:58px;font-family:var(--sans);font-size:13px;
+  border:1px solid var(--rule);padding:6px 8px;background:#fff;resize:vertical}
+.pvo .slot{border:1px solid var(--rule);background:#fff;padding:7px 9px;margin-top:8px;cursor:pointer}
+.pvo .slot.plan{border-color:var(--mark)}
+.pvo .slot.done{border-color:var(--ok);background:#F4F9F6}
+.pvo .slot .sn{font-size:11.5px;font-weight:600}
+.pvo .slot .ss{font-family:var(--mono);font-size:9.5px;color:var(--soft);margin-top:2px}
+.pvo .slot.plan .ss{color:var(--mark)} .pvo .slot.done .ss{color:var(--ok)}
+.pvo .slot input{width:100%;font-size:12px;border:1px solid var(--rule);padding:5px 6px;
+  background:var(--input);margin-top:5px;font-family:var(--sans)}
+.meas{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:9px;align-items:end;margin-bottom:11px}
+@media(max-width:640px){.meas{grid-template-columns:1fr 1fr}}
+.delta{font-family:var(--mono);font-size:15px;font-weight:600;padding:6px 8px;border:1px solid var(--rule);
+  background:#FCFDFC;text-align:right}
+.delta.plus{color:var(--mark);border-color:var(--mark)}
+.delta.minus{color:var(--blue);border-color:var(--blue)}
+.delta.zero{color:var(--ok);border-color:var(--ok)}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:14px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+.sheet h4{font-size:11px;color:var(--soft);font-weight:600;margin:18px 0 7px;
+  padding-bottom:4px;border-bottom:1px solid var(--rule)}
+table.tbl{width:100%;border-collapse:collapse;font-size:11px}
+table.tbl th{text-align:left;font-size:9.5px;color:var(--soft);font-weight:500;
+  border-bottom:1px solid var(--ink);padding:5px 7px 5px 0;vertical-align:bottom}
+table.tbl td{padding:5px 7px 5px 0;border-bottom:1px solid var(--rulesoft);vertical-align:top;line-height:1.35}
+table.tbl td.m{font-family:var(--mono);font-size:10.5px;text-align:right;white-space:nowrap}
+table.tbl td.plus{color:var(--mark)} table.tbl td.minus{color:var(--blue)}
+table.tbl td.blank{color:var(--mark);font-style:italic}
+.pairblock{margin-bottom:14px}
+.pairblock .cap{font-size:11.5px;font-weight:600;margin-bottom:6px}
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pairs .box{aspect-ratio:4/3;border:1px dashed var(--rule);background:#FAFBFA;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:10px}
+.pairs .box span{font-size:10.5px;color:var(--soft);line-height:1.4}
+.pairs .box.plan{border-color:var(--mark)}
+.pairs .box.plan span{color:var(--mark)}
+.pairs figcaption{font-size:10px;color:var(--soft);margin-top:3px}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 53</span>
+  <h1>Revision Log</h1>
+</div>
+<div class="tabs">
+  <button id="tabE" class="on">Entries</button>
+  <button id="tabS">Sheet</button>
+  <button id="tabD">Details</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+
+<script>
+var meta={}, es=[], kinds=[], actions=[], slotStates=["Planned","Captured"];
+var openId=null, view="E", saveTimer=null, deletedIds=[];
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function num(v){var n=parseFloat(v); return isFinite(n)?n:null;}
+function find(id){for(var i=0;i<es.length;i++) if(es[i].id===id) return es[i]; return null;}
+function miss(e){var m=0; ["title","kind","predicted","actual","why","action"].forEach(function(k){
+  if(!String(e[k]||"").trim()) m++;}); return m;}
+function delta(e){var a=num(e.digitalVal),b=num(e.physicalVal); return (a!==null&&b!==null)?(b-a):null;}
+function dCls(v){return v===null?"":(Math.abs(v)<0.05?"zero":(v>0?"plus":"minus"));}
+function dStr(v){return v===null?"":((v>0?"+":"")+v.toFixed(1)+" "+meta.unit);}
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function doSave(){
+  var payload={meta:meta, entries:es, deletedIds:deletedIds};
+  deletedIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t53_save(JSON.stringify(payload));
+}
+
+/* ---------- count ---------- */
+function renderCount(){
+  var n=es.length;
+  var measured=es.filter(function(e){return delta(e)!==null;}).length;
+  var shots=0; es.forEach(function(e){
+    if((e.slotPredictedState||"Planned")==="Planned"&&String(e.slotPredicted||"").trim()) shots++;
+    if((e.slotActualState||"Planned")==="Planned"&&String(e.slotActual||"").trim()) shots++; });
+  var h='<div class="big">'+n+'</div><div class="l">'+(n===1?"entry":"entries")+
+    (n?" · "+measured+" with a measured difference":"")+
+    (shots?" · "+shots+" image"+(shots===1?"":"s")+" still to make":"")+'</div>';
+  if(n===0) h+='<div class="msg warn">An empty revision log means one of two things: you made something '+
+    'very simple, or you have not looked. Almost nobody’s garment matched the simulation exactly. '+
+    'Start with the deviations your construction log already found.</div>';
+  else if(n<3) h+='<div class="msg">Most students find between four and ten. If you have fewer, go back '+
+    'through your fit maps and compare them against how the garment actually sits.</div>';
+  else h+='<div class="msg good">This is the finding, not a failure. A log with honest entries scores higher '+
+    'than an empty one — knowing where the prediction broke is the thing being assessed.</div>';
+  return '<div class="count">'+h+'</div>';
+}
+
+/* ---------- entries ---------- */
+function slotHTML(id,which,name,state){
+  var done=state==="Captured";
+  return '<div class="slot '+(done?"done":"plan")+'">'+
+    '<div class="sn" onclick="cycSlot(\''+id+'\',\''+which+'\')">'+(esc(name)||"name this image")+'</div>'+
+    '<div class="ss" onclick="cycSlot(\''+id+'\',\''+which+'\')">'+esc(state||"Planned")+' · tap to change</div>'+
+    '<input type="text" value="'+esc(name)+'" placeholder="e.g. sleeve cap, front, A-pose" '+
+    'oninput="setSlotName(\''+id+'\',\''+which+'\',this.value)"></div>';
+}
+function renderEntries(){
+  if(!es.length) return '<div class="empty">Nothing yet. If you have your Tool 52 log, seeding from it creates an entry for every deviation it already noticed.</div>';
+  return es.map(function(e,i){
+    var m=miss(e), open=e.id===openId, dv=delta(e);
+    return '<div class="ent '+(open?"open ":"")+(m?"bad":"good")+'">'+
+      '<div class="ehead" onclick="tog(\''+e.id+'\')">'+
+        '<span class="n">'+String(i+1).padStart(2,"0")+'</span>'+
+        '<span class="nm'+(e.title?"":" empty")+'">'+(esc(e.title)||"Untitled divergence")+'</span>'+
+        (e.kind?'<span class="pill">'+esc(e.kind)+'</span>':'')+
+        (dv!==null?'<span class="d '+dCls(dv)+'">'+dStr(dv)+'</span>':'')+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="ebody">'+
+        '<div class="g2">'+
+          '<div class="f"><label>What diverged <b>•</b></label>'+
+            '<input type="text" value="'+esc(e.title)+'" placeholder="Sleeve cap eased differently than simulated" '+
+            'oninput="setF(\''+e.id+'\',\'title\',this.value)"></div>'+
+          '<div class="f"><label>Kind <b>•</b></label>'+
+            '<select onchange="setF(\''+e.id+'\',\'kind\',this.value)"><option value="">—</option>'+
+            kinds.map(function(o){return '<option'+(e.kind===o?" selected":"")+'>'+o+'</option>';}).join("")+
+            '</select></div></div>'+
+        '<div class="pvo">'+
+          '<div><h4>What CLO3D predicted <span class="tag" style="color:var(--blue)">digital</span></h4>'+
+            '<textarea placeholder="What the simulation showed you" '+
+            'oninput="setF(\''+e.id+'\',\'predicted\',this.value)">'+esc(e.predicted)+'</textarea>'+
+            slotHTML(e.id,"slotPredicted",e.slotPredicted,e.slotPredictedState)+'</div>'+
+          '<div><h4>What the cloth did <span class="tag" style="color:var(--mark)">physical</span></h4>'+
+            '<textarea placeholder="What actually happened" '+
+            'oninput="setF(\''+e.id+'\',\'actual\',this.value)">'+esc(e.actual)+'</textarea>'+
+            slotHTML(e.id,"slotActual",e.slotActual,e.slotActualState)+'</div>'+
+        '</div>'+
+        '<div class="meas">'+
+          '<div class="f" style="margin:0"><label>Measurement point, if there is one</label>'+
+            '<input type="text" value="'+esc(e.point)+'" placeholder="Chest, half" '+
+            'oninput="setF(\''+e.id+'\',\'point\',this.value)"></div>'+
+          '<div class="f" style="margin:0"><label>Digital</label><input type="number" step="0.1" value="'+
+            esc(e.digitalVal)+'" oninput="setF(\''+e.id+'\',\'digitalVal\',this.value)"></div>'+
+          '<div class="f" style="margin:0"><label>Physical</label><input type="number" step="0.1" value="'+
+            esc(e.physicalVal)+'" oninput="setF(\''+e.id+'\',\'physicalVal\',this.value)"></div>'+
+          '<div><label style="display:block;font-size:11px;color:var(--soft);margin-bottom:3px">Difference</label>'+
+            '<div class="delta '+dCls(dv)+'">'+(dv!==null?dStr(dv):"—")+'</div></div></div>'+
+        '<div class="f"><label>Why it diverged <b>•</b></label>'+
+          '<textarea rows="2" placeholder="The cause, not the symptom" '+
+          'oninput="setF(\''+e.id+'\',\'why\',this.value)">'+esc(e.why)+'</textarea>'+
+          '<div class="hint">"The fabric was stiffer than the preset" is a cause. "It looked wrong" is not.</div></div>'+
+        '<div class="g2">'+
+          '<div class="f"><label>What you did about it <b>•</b></label>'+
+            '<select onchange="setF(\''+e.id+'\',\'action\',this.value)"><option value="">—</option>'+
+            actions.map(function(o){return '<option'+(e.action===o?" selected":"")+'>'+o+'</option>';}).join("")+
+            '</select></div>'+
+          '<div class="f"><label>Detail of the change</label>'+
+            '<input type="text" value="'+esc(e.detail)+'" placeholder="Armhole lowered 8 mm front and back" '+
+            'oninput="setF(\''+e.id+'\',\'detail\',this.value)"></div></div>'+
+        '<div class="bar2" style="margin:6px 0 0">'+
+          '<button class="a q d" onclick="del(\''+e.id+'\')">Delete entry</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- sheet ---------- */
+function renderSheet(){
+  function cell(v){var t=String(v||"").trim(); return t?'<td>'+esc(t)+'</td>':'<td class="blank">—</td>';}
+  var rows=es.map(function(e,i){
+    var dv=delta(e);
+    return '<tr><td class="m">'+String(i+1).padStart(2,"0")+'</td>'+
+      '<td>'+(esc(e.title)||'<span style="color:var(--mark)">untitled</span>')+'</td>'+
+      '<td>'+(esc(e.kind)||"—")+'</td>'+cell(e.predicted)+cell(e.actual)+
+      '<td class="m '+dCls(dv)+'">'+(dv!==null?dStr(dv):"—")+'</td>'+cell(e.why)+
+      '<td>'+(esc(e.action)||"—")+(e.detail?'<br><span style="color:var(--soft)">'+esc(e.detail)+'</span>':'')+
+      '</td></tr>';
+  }).join("");
+  var withPairs=es.filter(function(e){return String(e.slotPredicted||"").trim()||String(e.slotActual||"").trim();});
+  var pairs=withPairs.map(function(e){
+    function box(name,state,lab){
+      var plan=state!=="Captured";
+      return '<figure style="margin:0"><div class="box'+(plan?" plan":"")+'"><span>'+
+        (esc(name)||"unnamed")+(plan?'<br>still to make':'<br>captured')+'</span></div>'+
+        '<figcaption>'+lab+'</figcaption></figure>';
+    }
+    return '<div class="pairblock"><div class="cap">'+String(es.indexOf(e)+1).padStart(2,"0")+' · '+
+      (esc(e.title)||"Untitled")+'</div><div class="pairs">'+
+      box(e.slotPredicted,e.slotPredictedState,"Predicted — CLO3D")+box(e.slotActual,e.slotActualState,"Actual — the garment")+'</div></div>';
+  }).join("");
+  var closing=String(meta.closing||"").trim();
+  var measured=es.filter(function(e){return delta(e)!==null;});
+  var avg=measured.length?measured.reduce(function(a,e){return a+Math.abs(delta(e));},0)/measured.length:null;
+
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
+    '<div class="sheet">'+
+    '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
+    '<span class="n">Tool 53 · revision log</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>'+(esc(meta.route)||"route not set")+'</span>'+
+      '<span>'+es.length+' revision'+(es.length===1?"":"s")+'</span>'+
+      (avg!==null?'<span>mean difference '+avg.toFixed(1)+' '+esc(meta.unit)+' across '+
+        measured.length+' measured points</span>':'')+'</div>'+
+    (es.length?'<table class="tbl"><thead><tr><th style="width:4%">#</th><th style="width:15%">Divergence</th>'+
+      '<th style="width:10%">Kind</th><th style="width:16%">Predicted</th><th style="width:16%">Actual</th>'+
+      '<th style="width:7%;text-align:right">Diff</th><th style="width:16%">Why</th>'+
+      '<th style="width:16%">Action</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      :'<p style="color:var(--mark);font-style:italic">No revisions recorded.</p>')+
+    (pairs?'<h4>Predicted against actual</h4>'+pairs:'')+
+    (closing?'<h4>What this taught me about trusting the simulation</h4>'+
+      '<p style="font-size:11.5px;line-height:1.55;white-space:pre-wrap">'+esc(closing)+'</p>':'')+
+    '</div>';
+}
+
+/* ---------- details ---------- */
+function renderDetails(){
+  return '<p class="lbl">Your details</p>'+
+    '<div class="card"><div class="g3">'+
+      '<div class="f"><label>Name</label><input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+      '<div class="f"><label>Item</label><input type="text" value="'+esc(meta.item)+'" oninput="setMeta(\'item\',this.value)"></div>'+
+      '<div class="f"><label>Route</label><select onchange="setMeta(\'route\',this.value)"><option value="">—</option>'+
+        ["Full production","Toile"].map(function(o){return '<option'+(meta.route===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div></div>'+
+      '<div class="f" style="max-width:180px;margin:0"><label>Measurement unit</label>'+
+        '<select onchange="setMeta(\'unit\',this.value)">'+
+        ["cm","mm","in"].map(function(o){return '<option'+(meta.unit===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div></div>'+
+    '<p class="lbl">Closing statement</p>'+
+    '<div class="card"><div class="f" style="margin:0"><label>What this taught you about trusting the simulation</label>'+
+      '<textarea rows="4" placeholder="Where would you now check rather than assume?" '+
+      'oninput="setMeta(\'closing\',this.value)">'+esc(meta.closing)+'</textarea>'+
+      '<div class="hint">This prints at the end of the log. It is the one place in the tech pack where you get '+
+      'to draw a conclusion rather than record a fact.</div></div></div>';
+}
+
+function render(){
+  var html;
+  if(view==="E") html = renderCount()+renderEntries()+
+    '<div class="bar2"><button class="a p" id="addBtn">Add an entry</button>'+
+    '<button class="a q" id="seedBtn">Seed from Tool 52</button></div>'+
+    '<p class="note">Every entry needs a correction, or a stated decision that no correction is needed. '+
+    'A divergence you noticed and did nothing about is still an entry — say why you left it.</p>';
+  else if(view==="S") html = renderCount()+renderSheet();
+  else html = renderCount()+renderDetails();
+  document.getElementById("page").innerHTML = html;
+  if(view==="E"){
+    document.getElementById("addBtn").onclick=function(){ google.script.run.withSuccessHandler(function(json){
+      applyData(json); var last=es[es.length-1]; if(last){ openId=last.id; render(); } }).t53_addEntry(); };
+    document.getElementById("seedBtn").onclick=function(){ google.script.run.withSuccessHandler(function(json){
+      var d=JSON.parse(json); applyData(json); render();
+      alert(d.added?d.added+" entries created from your construction log. Each still needs what CLO3D predicted, why it diverged, and what you did."
+                   :"No deviations found in your construction log yet.");
+    }).t53_seedFromBuild(); };
+  }
+  if(view==="S" && es.length) document.getElementById("printBtn").onclick=function(){window.print();};
+}
+
+/* ---------- edits ---------- */
+var RER={title:1,kind:1,action:1,digitalVal:1,physicalVal:1};
+function setF(id,key,val){var e=find(id); if(!e) return; e[key]=val;
+  if(RER[key]) render(); queueSave();}
+function setSlotName(id,which,v){var e=find(id); if(!e) return; e[which]=v; queueSave();}
+function cycSlot(id,which){var e=find(id); if(!e) return;
+  var stKey=which+"State"; var i=slotStates.indexOf(e[stKey]||"Planned");
+  e[stKey]=slotStates[(i+1)%slotStates.length]; render(); queueSave();}
+function tog(id){openId=(openId===id)?null:id; render();}
+function del(id){if(!confirm("Delete this entry?")) return;
+  es=es.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave();}
+function setMeta(k,v){ meta[k]=v; if(view==="S") render(); queueSave(); }
+
+function setView(v){
+  view=v;
+  [["tabE","E"],["tabS","S"],["tabD","D"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+document.getElementById("tabE").onclick=function(){setView("E");};
+document.getElementById("tabS").onclick=function(){setView("S");};
+document.getElementById("tabD").onclick=function(){setView("D");};
+
+function applyData(json){
+  var d=JSON.parse(json);
+  meta=d.meta; es=d.entries; kinds=d.kinds; actions=d.actions; slotStates=d.slotStates;
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t53_get();
+</script>
+</body>
+</html>
