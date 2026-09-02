@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{
+  --ink:#1B2A35; --soft:#5A6B77; --rule:#C3CCC6; --rulesoft:#E2E7E3;
+  --table:#DFE3DC; --paper:#fff; --input:#FFF9E8;
+  --mark:#B8402A; --ok:#3D7A5C; --amber:#8A6A1F; --blue:#2C5A78;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:14px;line-height:1.45}
+.masthead{background:var(--ink);color:#F2F4F1;padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.masthead h1{font-size:15px;font-weight:600;margin:0}
+.masthead .num{font-family:var(--mono);font-size:12px;color:#8FA3AF}
+.tabs{display:flex;background:var(--ink);padding:0 18px;flex-wrap:wrap}
+.tabs button{background:none;border:none;border-bottom:3px solid transparent;color:#8FA3AF;
+  font-family:var(--sans);font-size:13px;padding:8px 12px;cursor:pointer}
+.tabs button.on{color:#fff;border-bottom-color:#fff}
+.tabs button:hover{color:#fff}
+.page{max-width:980px;margin:0 auto;padding:16px 18px 90px}
+.lbl{font-size:11.5px;color:var(--soft);margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.card{background:var(--paper);border:1px solid var(--rule);padding:14px 16px;margin-bottom:14px}
+.note{font-size:11.5px;color:var(--soft);max-width:68ch;line-height:1.45}
+.empty{border:1px dashed var(--rule);background:rgba(255,255,255,.6);padding:24px;
+  text-align:center;color:var(--soft);font-size:13px;margin-bottom:12px}
+.reqs{background:var(--paper);border:1px solid var(--ink);padding:11px 14px;margin-bottom:12px}
+.req{display:flex;gap:10px;padding:4px 0;border-bottom:1px dotted var(--rule);font-size:12.5px}
+.req:last-child{border-bottom:none}
+.req .s{font-family:var(--mono);font-size:11px;margin-left:auto}
+.req.met .s{color:var(--ok)} .req.unmet .s{color:var(--mark)} .req.soft .s{color:var(--amber)}
+.req.met span:first-child{color:var(--soft)}
+.warn{color:var(--mark);font-size:11px;margin-top:9px;padding-top:8px;border-top:1px solid var(--rule);line-height:1.45}
+.route{padding:10px 13px;margin-bottom:14px;font-size:12.5px;font-weight:600;border:1px solid}
+.route.prod{border-color:var(--ok);color:var(--ok);background:#F4F9F6}
+.route.toile{border-color:var(--mark);color:var(--mark);background:#FDF6F4}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+@media(max-width:700px){.g3,.g4{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;color:var(--soft);margin-bottom:3px}
+.f label b{color:var(--mark);font-family:var(--mono)}
+.f input,.f select,.f textarea{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);
+  background:var(--input);border:1px solid var(--rule);padding:6px 8px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.f .hint{font-size:10.5px;color:var(--soft);margin-top:3px;line-height:1.35}
+.f.mono input{font-family:var(--mono);font-size:12px}
+.card2{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);margin-bottom:8px}
+.card2.bad{border-left-color:var(--mark)} .card2.good{border-left-color:var(--ok)}
+.card2.stock{background:#F7FAFC}
+.head{display:flex;align-items:center;gap:9px;padding:8px 12px;cursor:pointer;user-select:none}
+.head .nm{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.head .nm.empty{font-weight:400;font-style:italic;color:var(--soft)}
+.head .pill{font-family:var(--mono);font-size:10px;padding:1px 6px;border:1px solid var(--rule);color:var(--soft);flex:none}
+.head .pill.stock{border-color:var(--blue);color:var(--blue)}
+.head .pill.ok{border-color:var(--ok);color:var(--ok)}
+.head .pill.no{border-color:var(--mark);color:var(--mark);font-weight:600}
+.head .val{font-family:var(--mono);font-size:11px;color:var(--soft);flex:none}
+.head .chev{font-family:var(--mono);font-size:12px;color:var(--soft);flex:none}
+.bodyc{display:none;padding:4px 12px 12px;border-top:1px solid var(--rulesoft)}
+.card2.open .bodyc{display:block}
+.bar2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button.a{font-family:var(--sans);font-size:12.5px;padding:7px 12px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);cursor:pointer}
+button.a:hover{background:var(--ink);color:#fff}
+button.a.p{background:var(--ink);color:#fff}
+button.a.q{border-color:var(--rule);color:var(--soft)}
+button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
+button.a.d:hover{background:var(--mark);border-color:var(--mark)}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--ink);
+  padding:9px 18px;display:flex;align-items:center;gap:12px;z-index:20;font-size:11.5px;color:var(--soft)}
+.foot b{color:var(--ink);font-family:var(--mono);font-size:13px}
+.foot .sp{margin-left:auto}
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:22px 24px;margin-bottom:14px;
+  box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sheet-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);
+  padding-bottom:7px;margin-bottom:6px;gap:12px}
+.sheet-head .t{font-size:15px;font-weight:600}
+.sheet-head .n{font-family:var(--mono);font-size:11px;color:var(--soft)}
+.sheet-sub{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--soft);
+  border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
+.sheet-sub strong{color:var(--ink)}
+.sheet h4{font-size:11px;color:var(--soft);font-weight:600;margin:16px 0 6px;
+  padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.sheet h4:first-of-type{margin-top:0}
+table.bom{width:100%;border-collapse:collapse;font-size:11px}
+table.bom th{text-align:left;font-weight:500;color:var(--soft);font-size:9.5px;
+  border-bottom:1px solid var(--ink);padding:4px 6px 4px 0;vertical-align:bottom}
+table.bom td{padding:4px 6px 4px 0;border-bottom:1px solid var(--rulesoft);vertical-align:top;line-height:1.35}
+table.bom td.m{font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+table.bom td.r{text-align:right;font-family:var(--mono);font-size:10.5px;white-space:nowrap}
+table.bom td.blank{color:var(--mark);font-style:italic}
+table.bom tr.total td{border-bottom:none;border-top:1px solid var(--ink);font-weight:600;padding-top:6px}
+table.bom .cat{font-family:var(--mono);font-size:9.5px;color:var(--blue)}
+.slipbox{background:var(--paper);border:1px solid var(--rule);padding:22px 24px;box-shadow:0 1px 0 rgba(27,42,53,.08)}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:22px}
+.sig div{border-bottom:1px solid var(--ink);padding-bottom:22px}
+.sig small{display:block;color:var(--soft);font-size:10.5px;margin-top:5px}
+.loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <span class="num">Tool 50</span>
+  <h1>Finishing &amp; Hardware Spec</h1>
+</div>
+<div class="tabs">
+  <button id="tabM" class="on">Materials</button>
+  <button id="tabF">Finishing</button>
+  <button id="tabK">Stock slip</button>
+  <button id="tabS">Spec sheet</button>
+  <button id="tabD">Details</button>
+</div>
+<div class="page" id="page"><div class="loading">Loading…</div></div>
+<div class="foot">
+  <span>build <b id="cBuild">0.00</b> <span id="cur1"></span></span>
+  <span>make again <b id="cAgain">0.00</b> <span id="cur2"></span></span>
+  <span class="sp" id="stockNote"></span>
+</div>
+
+<script>
+var MREQ=["item","dimension","qty","source","status","referenceId"];
+var FREQ=["location","operation","spec"];
+
+var meta={}, ms=[], fs=[], refs=[], cats=[], types=[], sources=[], statuses=[], ops=[];
+var openId=null, view="M", saveTimer=null, deletedMaterialIds=[], deletedFinishingIds=[];
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function num(v){var n=parseFloat(v); return isFinite(n)?n:null;}
+function missM(m){return MREQ.filter(function(k){return String(m[k]||"").trim()==="";});}
+function missF(f){return FREQ.filter(function(k){return String(f[k]||"").trim()==="";});}
+function isStock(m){return m.source==="CSB stock";}
+function lineVal(m){var q=num(m.qty),v=num(m.unitValue); return (q!==null&&v!==null)?q*v:null;}
+function unavailable(m){return String(m.status||"").indexOf("Unavailable")===0;}
+function secured(m){return m.status==="In hand"||m.status==="Requested or ordered";}
+function findM(id){for(var i=0;i<ms.length;i++) if(ms[i].id===id) return ms[i]; return null;}
+function findF(id){for(var i=0;i<fs.length;i++) if(fs[i].id===id) return fs[i]; return null;}
+function refTitle(id){ for(var i=0;i<refs.length;i++) if(refs[i].id===id) return refs[i].title; return ""; }
+
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function doSave(){
+  var payload={meta:meta, materials:ms, finishing:fs,
+    deletedMaterialIds:deletedMaterialIds, deletedFinishingIds:deletedFinishingIds};
+  deletedMaterialIds=[]; deletedFinishingIds=[];
+  google.script.run.withFailureHandler(function(e){console.error(e);}).t50_save(JSON.stringify(payload));
+}
+
+/* ---------- requirements ---------- */
+function renderReqs(){
+  var n=ms.length;
+  var dim=ms.filter(function(m){return String(m.dimension||"").trim();}).length;
+  var src=ms.filter(function(m){return m.source&&m.source!=="Not yet decided";}).length;
+  var ref=ms.filter(function(m){return String(m.referenceId||"").trim();}).length;
+  var sec=ms.filter(secured).length;
+  var una=ms.filter(unavailable).length;
+  var val=ms.filter(function(m){return num(m.unitValue)!==null;}).length;
+  var tag=ms.some(function(m){return m.category==="Label"&&String(m.placement||"").trim();});
+  var stock=ms.filter(isStock).length;
+  var slipOK = stock===0 || String(meta.slipApprovedOn||"").trim()!=="";
+  var items=[
+    [n>=5?"met":"unmet","Materials listed",n+" / 5"],
+    [(n>0&&dim===n)?"met":"unmet","Every line dimensioned",dim+" / "+n],
+    [(n>0&&src===n)?"met":"unmet","Every line has a source",src+" / "+n],
+    [(n>0&&ref===n)?"met":"unmet","Every line traced to a reference",ref+" / "+n],
+    [(n>0&&sec===n)?"met":"unmet","Material secured",sec+" / "+n],
+    [una===0?"met":"unmet","Nothing left unavailable",una===0?"none":una+" line"+(una===1?"":"s")],
+    [slipOK?"met":"unmet","Slip approved, if using stock",stock===0?"no stock":(slipOK?"approved":"not signed")],
+    [tag?"met":"unmet","Tag specified with a placement",tag?"yes":"missing"],
+    [fs.length>=4?"met":"unmet","Finishing operations",fs.length+" / 4"],
+    [(n>0&&val===n)?"met":"soft","Every line valued",val+" / "+n]
+  ];
+  var h='<div class="reqs"><div style="font-size:11px;color:var(--soft);margin-bottom:8px">What the midterm panel will check</div>'+
+    items.map(function(i){
+      return '<div class="req '+i[0]+'"><span>'+i[1]+'</span><span class="s">'+i[2]+'</span></div>';
+    }).join("");
+  if(n&&(sec<n||una>0)){
+    var short=(n-sec)+una;
+    h+='<div class="warn">Material is not secured on '+short+' line'+(short===1?"":"s")+
+       '. This alone routes you to toile at the midterm, whatever the design quality. '+
+       'Ordered counts; planning to order does not.</div>';
+  }
+  h+='</div>';
+  var ok=n>0&&sec===n&&una===0;
+  h+='<div class="route '+(ok?"prod":"toile")+'">'+
+    (n===0?"Nothing listed yet":(ok?"On track for full production":"Toile on material grounds"))+'</div>';
+  return h;
+}
+
+/* ---------- shared bits ---------- */
+function sel(id,key,opts,val,blank,fn){
+  return '<select onchange="'+(fn||"setM")+'(\''+id+'\',\''+key+'\',this.value)"><option value="">'+
+    (blank||"—")+'</option>'+opts.map(function(o){
+      return '<option'+(val===o?" selected":"")+'>'+esc(o)+'</option>';}).join("")+'</select>';
+}
+function selRef(id,val,fn){
+  var opts=refs.map(function(r){return '<option value="'+r.id+'"'+(val===r.id?" selected":"")+'>'+esc(r.title)+'</option>';});
+  return '<select onchange="'+(fn||"setM")+'(\''+id+'\',\'referenceId\',this.value)">'+
+    '<option value="">— which reference —</option>'+opts.join("")+'</select>';
+}
+function inp(id,key,val,ph,fn){
+  return '<input type="text" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
+    '" oninput="'+(fn||"setM")+'(\''+id+'\',\''+key+'\',this.value)">';
+}
+
+/* ---------- materials ---------- */
+function renderMats(){
+  if(!ms.length) return '<div class="empty">Nothing listed. Check the CSB stock first, then start with your main fabric.</div>';
+  var order=cats.slice();
+  var sorted=ms.slice().sort(function(a,b){return order.indexOf(a.category)-order.indexOf(b.category);});
+  return sorted.map(function(m){
+    var mi=missM(m), open=m.id===openId, lv=lineVal(m);
+    var pill = m.status==="In hand"?"ok":(unavailable(m)?"no":"");
+    return '<div class="card2 '+(open?"open ":"")+(mi.length?"bad":"good")+(isStock(m)?" stock":"")+'">'+
+      '<div class="head" onclick="tog(\''+m.id+'\')">'+
+        '<span class="nm'+(m.item?"":" empty")+'">'+(esc(m.item)||"Unnamed line")+'</span>'+
+        (m.source?'<span class="pill'+(isStock(m)?" stock":"")+'">'+esc(m.source)+'</span>':'')+
+        (m.status?'<span class="pill '+pill+'">'+esc(m.status)+'</span>':'')+
+        (lv!==null?'<span class="val">'+lv.toFixed(2)+'</span>':'')+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="bodyc">'+
+        '<div class="g3">'+
+          '<div class="f"><label>Category</label>'+sel(m.id,"category",cats,m.category)+'</div>'+
+          '<div class="f"><label>Type</label>'+sel(m.id,"type",types,m.type)+'</div>'+
+          '<div class="f"><label>Source <b>•</b></label>'+sel(m.id,"source",sources,m.source)+'</div>'+
+        '</div>'+
+        '<div class="f"><label>Item or description <b>•</b></label>'+
+          inp(m.id,"item",m.item,"cotton poplin, undyed")+'</div>'+
+        '<div class="g4">'+
+          '<div class="f mono"><label>Dimension <b>•</b></label>'+inp(m.id,"dimension",m.dimension,"145 cm wide")+'</div>'+
+          '<div class="f mono"><label>Qty <b>•</b></label>'+inp(m.id,"qty",m.qty)+'</div>'+
+          '<div class="f mono"><label>Unit</label>'+inp(m.id,"unit",m.unit,"m / pcs")+'</div>'+
+          '<div class="f mono"><label>Unit value</label>'+inp(m.id,"unitValue",m.unitValue)+'</div>'+
+        '</div>'+
+        '<div class="g2">'+
+          '<div class="f"><label>Status <b>•</b></label>'+sel(m.id,"status",statuses,m.status)+'</div>'+
+          '<div class="f"><label>'+(isStock(m)?"Stock location":"Supplier")+'</label>'+
+            inp(m.id,"supplier",m.supplier,isStock(m)?"Shelf B, roll 4":"")+'</div>'+
+        '</div>'+
+        '<div class="f"><label>Placement</label>'+inp(m.id,"placement",m.placement,"Measured from a landmark, in cm")+
+          '<div class="hint">"Centred on back yoke, 2 cm below the seam" — not "roughly here".</div></div>'+
+        '<div class="f"><label>Substituted from</label>'+
+          inp(m.id,"substitutedFrom",m.substitutedFrom,"What you originally specced, if this is not it")+
+          '<div class="hint">Only when stock gave you something different. This feeds your revision log.</div></div>'+
+        '<div class="f"><label>Reference <b>•</b></label>'+selRef(m.id,m.referenceId)+
+          (refs.length?"":'<div class="hint">Capture garments in Tool 47 and they will appear here.</div>')+'</div>'+
+        '<div class="bar2" style="margin:7px 0 0">'+
+          '<button class="a q" onclick="dupM(\''+m.id+'\')">Duplicate</button>'+
+          '<button class="a q d" onclick="delM(\''+m.id+'\')">Delete line</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- finishing ---------- */
+function renderFins(){
+  if(!fs.length) return '<div class="empty">No operations yet. Seam finishes, topstitching, hems, closures.</div>';
+  return fs.map(function(f){
+    var mi=missF(f), open=f.id===openId;
+    return '<div class="card2 '+(open?"open ":"")+(mi.length?"bad":"good")+'">'+
+      '<div class="head" onclick="tog(\''+f.id+'\')">'+
+        '<span class="nm'+(f.location?"":" empty")+'">'+(esc(f.location)||"No location")+'</span>'+
+        (f.operation?'<span class="pill">'+esc(f.operation)+'</span>':'')+
+        '<span class="chev">'+(open?"−":"+")+'</span></div>'+
+      '<div class="bodyc">'+
+        '<div class="g2">'+
+          '<div class="f"><label>Location <b>•</b></label>'+inp(f.id,"location",f.location,"Side seam","setF")+'</div>'+
+          '<div class="f"><label>Operation <b>•</b></label>'+sel(f.id,"operation",ops,f.operation,null,"setF")+'</div>'+
+        '</div>'+
+        '<div class="f"><label>Specification <b>•</b></label>'+
+          '<textarea rows="2" placeholder="Flat-felled 6 mm, two rows of topstitch at 2 mm and 8 mm" '+
+          'oninput="setF(\''+f.id+'\',\'spec\',this.value)">'+esc(f.spec)+'</textarea>'+
+          '<div class="hint">Numbers, not adjectives. "Neatly finished" cannot be built from.</div></div>'+
+        '<div class="g2">'+
+          '<div class="f"><label>Thread</label>'+inp(f.id,"thread",f.thread,"Tex 40","setF")+'</div>'+
+          '<div class="f mono"><label>Machine and settings</label>'+
+            inp(f.id,"settings",f.settings,"Lockstitch, 3.0 mm, 90/14","setF")+'</div>'+
+        '</div>'+
+        '<div class="f"><label>Reference</label>'+selRef(f.id,f.referenceId,"setF")+'</div>'+
+        '<div class="bar2" style="margin:7px 0 0">'+
+          '<button class="a q d" onclick="delF(\''+f.id+'\')">Delete</button></div>'+
+      '</div></div>';
+  }).join("");
+}
+
+/* ---------- stock slip (live preview — the real print copy is the StockSlip tab) ---------- */
+function renderSlip(){
+  var st=ms.filter(isStock);
+  if(!st.length) return '<div class="empty">No lines marked CSB stock yet. Mark a material\'s source as CSB stock and it appears here.</div>';
+  var total=st.reduce(function(a,m){var lv=lineVal(m); return a+(lv||0);},0);
+  return '<div class="slipbox">'+
+    '<div class="sheet-head"><span class="t">CSB stock — materials request</span>'+
+    '<span class="n">Tool 50 · slip</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>Group '+(esc(meta.group)||"—")+'</span>'+
+      '<span>Digital Design II — Year 2</span>'+
+      '<span>'+(esc(meta.item)||"item not named")+'</span></div>'+
+    '<table class="bom"><thead><tr><th style="width:34%">Material</th><th style="width:15%">Dimension</th>'+
+    '<th style="width:10%" class="r">Qty</th><th style="width:25%">Stock location</th>'+
+    '<th style="width:16%" class="r">Est. value</th></tr></thead><tbody>'+
+    st.map(function(m){
+      var lv=lineVal(m);
+      return '<tr><td>'+(esc(m.item)||'<span style="color:var(--mark)">unnamed</span>')+'</td>'+
+        '<td class="m">'+esc(m.dimension)+'</td>'+
+        '<td class="r">'+esc(m.qty)+(m.unit?" "+esc(m.unit):"")+'</td>'+
+        '<td>'+(esc(m.supplier)||'<span class="blank">not located</span>')+'</td>'+
+        '<td class="r">'+(lv===null?"":lv.toFixed(2))+'</td></tr>';
+    }).join("")+
+    '<tr class="total"><td colspan="4" style="text-align:right">Total estimated value</td>'+
+    '<td class="r">'+total.toFixed(2)+' '+esc(meta.currency)+'</td></tr></tbody></table>'+
+    '<div class="sig"><div><small>Requested by student — signature and date</small></div>'+
+    '<div><small>Approved by — signature and date</small></div></div>'+
+    '<p style="font-size:10.5px;color:var(--soft);margin-top:18px">Anything refused or unavailable should be '+
+    'marked on the materials list as needing a substitute. This is a preview — use <em>Tools → Print the stock slip</em> '+
+    'for the copy to sign.</p></div>';
+}
+
+/* ---------- spec sheet ---------- */
+function renderSheet(){
+  if(!ms.length && !fs.length) return '<div class="empty">The spec sheet builds itself as you fill the tables.</div>';
+  var build=0, again=0;
+  var rows=cats.map(function(c){
+    var list=ms.filter(function(m){return m.category===c;});
+    return list.map(function(m,i){
+      var lv=lineVal(m); if(lv!==null){ again+=lv; if(m.source==="Purchase") build+=lv; }
+      function cell(v,cls){var t=String(v||"").trim();
+        return t?'<td class="'+(cls||"")+'">'+esc(t)+'</td>':'<td class="blank">—</td>';}
+      var col = m.status==="In hand"?"var(--ok)":(m.status==="Requested or ordered"?"var(--blue)":
+                (unavailable(m)?"var(--mark)":"var(--amber)"));
+      return '<tr><td class="cat">'+(i===0?esc(c):"")+'</td>'+
+        '<td>'+(esc(m.item)||'<span style="color:var(--mark)">unnamed</span>')+
+          (m.type?'<br><span style="color:var(--soft);font-size:9.5px">'+esc(m.type)+'</span>':'')+
+          (m.substitutedFrom?'<br><span style="color:var(--amber);font-size:9.5px">was: '+esc(m.substitutedFrom)+'</span>':'')+'</td>'+
+        cell(m.dimension,"m")+
+        '<td class="r">'+esc(m.qty)+(m.unit?" "+esc(m.unit):"")+'</td>'+
+        cell(m.placement)+cell(m.supplier)+
+        '<td class="m" style="color:'+col+'">'+esc(m.source)+' · '+esc(m.status)+'</td>'+
+        cell(refTitle(m.referenceId))+
+        '<td class="r">'+(lv===null?"":lv.toFixed(2))+'</td></tr>';
+    }).join("");
+  }).join("");
+  var finRows=fs.map(function(f){
+    function cell(v,cls){var t=String(v||"").trim();
+      return t?'<td class="'+(cls||"")+'">'+esc(t)+'</td>':'<td class="blank">—</td>';}
+    return '<tr><td>'+(esc(f.location)||'<span style="color:var(--mark)">no location</span>')+'</td>'+
+      '<td class="cat">'+esc(f.operation)+'</td>'+
+      '<td>'+(esc(f.spec)||'<span style="color:var(--mark)">not specified</span>')+'</td>'+
+      cell(f.thread)+cell(f.settings,"m")+cell(refTitle(f.referenceId))+'</tr>';
+  }).join("");
+  return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
+    '<div class="sheet">'+
+    '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
+    '<span class="n">Tool 50 · finishing and hardware</span></div>'+
+    '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
+      '<span>Group '+(esc(meta.group)||"—")+'</span>'+
+      '<span>build '+build.toFixed(2)+' '+esc(meta.currency)+'</span>'+
+      '<span>make again '+again.toFixed(2)+' '+esc(meta.currency)+'</span></div>'+
+    (ms.length?'<h4>Bill of materials</h4><table class="bom"><thead><tr>'+
+      '<th style="width:8%"></th><th style="width:19%">Item</th><th style="width:10%">Dimension</th>'+
+      '<th style="width:8%" class="r">Qty</th><th style="width:14%">Placement</th>'+
+      '<th style="width:12%">Source location</th><th style="width:14%">Sourcing</th>'+
+      '<th style="width:11%">Reference</th><th style="width:8%" class="r">Value</th></tr></thead><tbody>'+
+      rows+'<tr class="total"><td></td><td>Cost to make it again</td><td colspan="6"></td>'+
+      '<td class="r">'+again.toFixed(2)+'</td></tr></tbody></table>':'')+
+    (fs.length?'<h4>Finishing schedule</h4><table class="bom"><thead><tr>'+
+      '<th style="width:18%">Location</th><th style="width:12%">Operation</th><th style="width:30%">Specification</th>'+
+      '<th style="width:13%">Thread</th><th style="width:15%">Settings</th><th style="width:12%">Reference</th>'+
+      '</tr></thead><tbody>'+finRows+'</tbody></table>':'')+
+    '</div>';
+}
+
+/* ---------- footer ---------- */
+function renderFoot(){
+  var build=0, again=0;
+  ms.forEach(function(m){ var lv=lineVal(m); if(lv===null) return;
+    again+=lv; if(m.source==="Purchase") build+=lv; });
+  document.getElementById("cBuild").textContent=build.toFixed(2);
+  document.getElementById("cAgain").textContent=again.toFixed(2);
+  document.getElementById("cur1").textContent=meta.currency;
+  document.getElementById("cur2").textContent=meta.currency;
+  var st=ms.filter(isStock).length;
+  document.getElementById("stockNote").textContent = st
+    ? st+" line"+(st===1?"":"s")+" from stock · "+(again-build).toFixed(2)+" "+meta.currency+" subsidised"
+    : "";
+}
+
+/* ---------- details ---------- */
+function renderDetails(){
+  return '<p class="lbl">Your details</p>'+
+    '<div class="card"><div class="g4">'+
+      '<div class="f"><label>Name</label><input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+      '<div class="f"><label>Group</label><select onchange="setMeta(\'group\',this.value)">'+
+        '<option value="">—</option>'+["A","B"].map(function(o){return '<option'+(meta.group===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div>'+
+      '<div class="f"><label>Item</label><input type="text" value="'+esc(meta.item)+'" oninput="setMeta(\'item\',this.value)"></div>'+
+      '<div class="f"><label>Currency</label><select onchange="setMeta(\'currency\',this.value)">'+
+        ["USD","LBP","EUR"].map(function(o){return '<option'+(meta.currency===o?" selected":"")+'>'+o+'</option>';}).join("")+
+        '</select></div>'+
+    '</div></div>'+
+    '<p class="lbl">Stock permission slip</p>'+
+    '<div class="card"><div class="g3">'+
+      '<div class="f"><label>Requested on</label><input type="text" value="'+esc(meta.slipRequested)+'" placeholder="YYYY-MM-DD" oninput="setMeta(\'slipRequested\',this.value)"></div>'+
+      '<div class="f"><label>Approved by</label><input type="text" value="'+esc(meta.slipApprovedBy)+'" oninput="setMeta(\'slipApprovedBy\',this.value)"></div>'+
+      '<div class="f"><label>Approved on</label><input type="text" value="'+esc(meta.slipApprovedOn)+'" placeholder="YYYY-MM-DD" oninput="setMeta(\'slipApprovedOn\',this.value)"></div>'+
+    '</div><p class="note" style="margin:0">One slip per student for the whole project, so gather everything before '+
+      'you request. An unsigned slip does not count as secured.</p></div>'+
+    '<p class="lbl">References</p>'+
+    '<div class="card"><span style="font-size:12px;color:var(--soft)">'+refs.length+' reference'+(refs.length===1?"":"s")+
+    ' available from Tool 47.</span></div>';
+}
+
+function render(){
+  var html;
+  if(view==="M") html = renderReqs()+renderMats()+
+    '<div class="bar2"><button class="a p" id="addM">Add a material</button>'+
+    '<button class="a q" id="starter">Add the usual shirt lines</button></div>'+
+    '<p class="note">Check the CSB stock before you plan to buy anything. Stock is finite and shared — twenty of '+
+    'you are working at once and the first person to ask gets the bolt. Checking early is a real advantage, not advice.</p>';
+  else if(view==="F") html = '<p class="lbl">Operations — what gets done, and where</p>'+renderFins()+
+    '<div class="bar2"><button class="a p" id="addF">Add an operation</button></div>'+
+    '<p class="note">These become the construction callouts in your tech pack. Write them so a sample room could '+
+    'follow them without you in the building.</p>';
+  else if(view==="K") html = renderSlip();
+  else if(view==="S") html = renderSheet();
+  else html = renderDetails();
+  document.getElementById("page").innerHTML = html;
+  renderFoot();
+  if(view==="M"){ document.getElementById("addM").onclick=onAddM; document.getElementById("starter").onclick=onStarter; }
+  if(view==="F") document.getElementById("addF").onclick=onAddF;
+  if(view==="S" && (ms.length||fs.length)) document.getElementById("printBtn").onclick=function(){window.print();};
+}
+
+/* ---------- edits ---------- */
+var RER={category:1,source:1,status:1,item:1,referenceId:1};
+function setM(id,key,val){var m=findM(id); if(!m) return; m[key]=val;
+  if(RER[key]) render(); else { renderFoot(); queueSave(); return; } queueSave();}
+function setF(id,key,val){var f=findF(id); if(!f) return; f[key]=val;
+  if(key==="location"||key==="operation"||key==="referenceId") render(); queueSave();}
+function setMeta(k,v){ meta[k]=v; render(); queueSave(); }
+function tog(id){ openId=(openId===id)?null:id; render(); }
+function delM(id){ if(!confirm("Delete this line?")) return;
+  ms=ms.filter(function(x){return x.id!==id;}); deletedMaterialIds.push(id); render(); queueSave(); }
+function delF(id){ if(!confirm("Delete this operation?")) return;
+  fs=fs.filter(function(x){return x.id!==id;}); deletedFinishingIds.push(id); render(); queueSave(); }
+function dupM(id){
+  var m=findM(id); if(!m) return;
+  google.script.run.withSuccessHandler(function(json){
+    applyData(json);
+    var c=ms[ms.length-1];
+    Object.keys(m).forEach(function(k){ if(k!=="id") c[k]=m[k]; });
+    openId=c.id; render(); queueSave();
+  }).t50_addMaterial();
+}
+function onAddM(){ google.script.run.withSuccessHandler(function(json){
+  applyData(json); var last=ms[ms.length-1]; if(last){ openId=last.id; render(); }
+}).t50_addMaterial(); }
+function onAddF(){ google.script.run.withSuccessHandler(function(json){
+  applyData(json); var last=fs[fs.length-1]; if(last){ openId=last.id; render(); }
+}).t50_addFinishing(); }
+function onStarter(){ google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t50_addStarter(); }
+
+function setView(v){
+  view=v;
+  [["tabM","M"],["tabF","F"],["tabK","K"],["tabS","S"],["tabD","D"]].forEach(function(a){
+    document.getElementById(a[0]).classList.toggle("on",v===a[1]);});
+  render();
+}
+["M","F","K","S","D"].forEach(function(v){ document.getElementById("tab"+v).onclick=function(){setView(v);}; });
+
+function applyData(json){
+  var d=JSON.parse(json);
+  meta=d.meta; ms=d.materials; fs=d.finishing; refs=d.refs;
+  cats=d.cats; types=d.types; sources=d.sources; statuses=d.status; ops=d.ops;
+}
+google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t50_get();
+</script>
+</body>
+</html>
