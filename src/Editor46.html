@@ -123,6 +123,18 @@ table.rec td.blank{color:var(--mark);font-style:italic}
   font-family:var(--mono);font-size:12px;padding:3px 8px;cursor:pointer}
 .overlay .close:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar,.bar2,.lbl,.diagbtn,.overlay,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0}
+  /* Never split a group's table across a page break. */
+  .sheet{border:none;box-shadow:none;padding:0;margin:0}
+  table.rec{break-inside:avoid;page-break-inside:avoid}
+  table.rec tr{break-inside:avoid;page-break-inside:avoid}
+  .sheet h4{break-after:avoid;page-break-after:avoid}
+  @page{margin:13mm}
+}
 </style>
 </head>
 <body>

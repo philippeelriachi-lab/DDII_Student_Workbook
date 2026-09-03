@@ -126,6 +126,18 @@ table.spec td.blank{color:var(--mark);font-style:italic;font-size:10.5px}
   border-bottom:1px solid var(--rulesoft);font-size:11.5px}
 .runrow .m{font-family:var(--mono);font-size:10.5px;color:var(--soft)}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar2,.lbl,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0}
+  /* An iteration sheet is never split across a page break — if it will not
+     fit on what is left of the page, it starts the next one. */
+  .sheet{border:none;box-shadow:none;padding:0;margin:0 0 8mm;
+    break-inside:avoid;page-break-inside:avoid}
+  table.spec tr,.revout,.runrow{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:13mm}
+}
 </style>
 </head>
 <body>

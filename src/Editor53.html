@@ -116,6 +116,20 @@ table.tbl td.blank{color:var(--mark);font-style:italic}
 .pairs .box.plan span{color:var(--mark)}
 .pairs figcaption{font-size:10px;color:var(--soft);margin-top:3px}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar2,.lbl,.count,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0}
+  .sheet{border:none;box-shadow:none;padding:0;margin:0}
+  table.tbl{font-size:8.5pt}
+  table.tbl thead{display:table-header-group}
+  table.tbl tr{break-inside:avoid;page-break-inside:avoid}
+  /* A predicted/actual pair stays together — split across pages it proves nothing. */
+  .pairblock{break-inside:avoid;page-break-inside:avoid}
+  .sheet h4{break-after:avoid;page-break-after:avoid}
+  @page{margin:12mm}
+}
 </style>
 </head>
 <body>

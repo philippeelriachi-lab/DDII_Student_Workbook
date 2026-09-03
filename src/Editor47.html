@@ -112,6 +112,19 @@ table.spec td.mono{font-family:var(--mono);font-size:10.5px}
 .wantout .v{font-size:12.5px;line-height:1.45}
 .wantout .v.blank{color:var(--mark);font-style:italic;font-size:11px}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar2,.lbl,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0}
+  /* A capture sheet is never split across a page break — if it will not fit
+     on what is left of the page, it starts the next one. */
+  .sheet{border:none;box-shadow:none;padding:0;margin:0 0 8mm;
+    break-inside:avoid;page-break-inside:avoid}
+  table.spec{break-inside:avoid;page-break-inside:avoid}
+  table.spec tr,.wantout,.slotline{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:13mm}
+}
 </style>
 </head>
 <body>
@@ -344,20 +357,25 @@ function renderDirection(){
       }).join("")
     : '<p class="note" style="margin:0">No archetypes set on your garments yet.</p>';
 
-  var unset=gs.length-total, verdict="";
+  var unset=gs.length-total, verdict="", why=String(meta.combineWhy||"").trim();
   if(gs.length){
     if(unset>0){
       verdict='<div class="verdict bad">'+unset+' garment'+(unset===1?"":"s")+' with no archetype set. Until they all have one, '+
         'neither you nor anyone else can tell whether the board is coherent.</div>';
     } else if(keys.length===1){
       verdict='<div class="verdict ok">Every reference is a '+keys[0].toLowerCase()+'. That is coherent, and easy to defend.</div>';
-    } else if(keys.length===2 && String(meta.combineWhy||"").trim()){
+    } else if(keys.length===2 && why){
       verdict='<div class="verdict ok">Two archetypes, deliberately combined, with a stated reason. That is a direction rather than a muddle.</div>';
     } else if(keys.length===2){
       verdict='<div class="verdict mix">Two archetypes and no reason given. Say below why they belong together, or drop one.</div>';
+    } else if(why){
+      verdict='<div class="verdict mix">'+keys.length+' archetypes across '+gs.length+' garments, and you have said why. '+
+        'That can hold, but it is the hardest version to defend. Most of your references are '+keys[0].toLowerCase()+
+        ' — be ready to say which one leads and what each of the others is there to contribute.</div>';
     } else {
-      verdict='<div class="verdict bad">'+keys.length+' archetypes across '+gs.length+' garments. A board this spread cannot be '+
-        'developed from — you are still choosing rather than deciding.</div>';
+      verdict='<div class="verdict bad">'+keys.length+' archetypes across '+gs.length+' garments, with no reason given. '+
+        'As it stands this reads as undecided rather than deliberate. Say below what holds them together, '+
+        'or drop the ones you are not actually developing from.</div>';
     }
   }
 

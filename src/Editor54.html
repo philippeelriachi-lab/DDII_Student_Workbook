@@ -96,7 +96,17 @@ button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
 .srow .tx{flex:1}
 .srow .ev{font-family:var(--mono);font-size:9.5px;color:var(--soft)}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
-@media print{ .rounds,.score,.grp,.route,.shots,.bar2,.lbl,.card{display:none!important} .sheet{display:block!important} }
+@media print{
+  body{background:#fff;font-size:10pt}
+  .rounds,.score,.grp,.route,.shots,.bar2,.lbl,.card,.no-print,#saveErrBar{display:none!important}
+  .sheet{display:block!important;border:none;box-shadow:none;padding:0;margin:0}
+  .page{max-width:none;padding:0;margin:0}
+  /* A check never splits, and a section heading stays with its first checks. */
+  .srow{break-inside:avoid;page-break-inside:avoid}
+  .sheet h4{break-after:avoid;page-break-after:avoid}
+  .sheet-head,.sheet-sub{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:13mm}
+}
 </style>
 </head>
 <body>

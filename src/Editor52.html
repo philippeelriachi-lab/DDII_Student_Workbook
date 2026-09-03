@@ -142,6 +142,17 @@ button.a:disabled{opacity:.35;cursor:default}
   border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px}
 .sheet-sub strong{color:var(--ink)}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar2,.lbl,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0}
+  .sheet{border:none;box-shadow:none;padding:0;margin:0}
+  table.tbl{font-size:8.5pt}
+  table.tbl thead{display:table-header-group}
+  table.tbl tr{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:12mm}
+}
 </style>
 </head>
 <body>

@@ -103,6 +103,20 @@ table.bom .cat{font-family:var(--mono);font-size:9.5px;color:var(--blue)}
 .sig div{border-bottom:1px solid var(--ink);padding-bottom:22px}
 .sig small{display:block;color:var(--soft);font-size:10.5px;margin-top:5px}
 .loading{padding:40px;text-align:center;color:var(--soft);font-size:13px}
+
+@media print{
+  body{background:#fff;font-size:10pt}
+  .masthead,.tabs,.bar2,.lbl,.foot,.reqs,.no-print,#saveErrBar{display:none!important}
+  .page{max-width:none;padding:0;margin:0;padding-bottom:0}
+  .sheet,.slipbox{border:none;box-shadow:none;padding:0;margin:0}
+  /* Keep a row, and a section heading with what follows it, on one page. */
+  table.bom{break-inside:auto}
+  table.bom thead{display:table-header-group}
+  table.bom tr{break-inside:avoid;page-break-inside:avoid}
+  .sheet h4{break-after:avoid;page-break-after:avoid}
+  .sig{break-inside:avoid;page-break-inside:avoid}
+  @page{margin:13mm}
+}
 </style>
 </head>
 <body>
