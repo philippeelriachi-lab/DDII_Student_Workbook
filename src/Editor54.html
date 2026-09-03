@@ -215,6 +215,24 @@ function renderSheet(sc){
    dispatch order — otherwise two overlapping calls (e.g. ticking a checkbox
    while a meta save is in flight) can have their responses arrive out of
    order, and the older, less-complete one wins if it arrives last. */
+/* A failed save used to be logged to a console nobody opens, so work could
+   go missing with no sign at all. Say so, on screen, instead. */
+function showSaveError(err){
+  var el=document.getElementById("saveErrBar");
+  if(!el){
+    el=document.createElement("div");
+    el.id="saveErrBar";
+    el.style.cssText="position:fixed;left:0;right:0;bottom:0;z-index:99;background:#B8402A;"+
+      "color:#fff;padding:9px 14px;font:12px/1.45 Helvetica,Arial,sans-serif";
+    document.body.appendChild(el);
+  }
+  el.textContent="Not saved — "+((err&&err.message)?err.message:String(err))+
+    ". Copy anything you have just typed before closing this window.";
+}
+function clearSaveError(){
+  var el=document.getElementById("saveErrBar");
+  if(el) el.parentNode.removeChild(el);
+}
 var gsBusy=false, gsQueue=[];
 /* A meta save is scheduled 600ms after the last keystroke. If anything else
    (ticking a check, switching round) is sent before that timer fires, the
@@ -231,9 +249,9 @@ function gsPump(){
   gsBusy=true;
   var job=gsQueue.shift();
   var runner=google.script.run.withSuccessHandler(function(res){
-    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+    gsBusy=false; clearSaveError(); if(job.onSuccess) job.onSuccess(res); gsPump();
   }).withFailureHandler(function(err){
-    gsBusy=false; console.error(err); gsPump();
+    gsBusy=false; console.error(err); showSaveError(err); gsPump();
   });
   runner[job.fnName].apply(runner, job.args);
 }

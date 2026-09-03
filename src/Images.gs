@@ -58,6 +58,50 @@ function img_upsertSlot_(tool, parentId, name, purpose, type, status) {
   return img_find_(tool, parentId, name);
 }
 
+/**
+ * Upserts many slots in one pass. Reads the Images tab once and appends all
+ * new rows in a single write — img_upsertSlot_ re-reads the whole tab per
+ * slot, which is fine for one slot and far too slow for a whole save.
+ * Each entry: {tool, parentId, name, purpose, type, status}.
+ */
+function img_upsertSlots_(slots) {
+  if (!slots || !slots.length) return;
+  var sh = sheet_("images");
+  var idx = headerIndex_("images");
+  var minutes = imageTypeMinutesMap_();
+  var byKey = {};
+  img_all_().forEach(function (r) {
+    byKey[r.tool + "|" + r.parentId + "|" + r.name] = r;
+  });
+  var lastCol = sh.getLastColumn();
+  var appends = [];
+  slots.forEach(function (s) {
+    var k = s.tool + "|" + s.parentId + "|" + s.name;
+    var found = byKey[k];
+    if (found) {
+      if (found.purpose !== s.purpose || found.type !== s.type || found.status !== s.status) {
+        writeRowByField_("images", found.id, { purpose: s.purpose, type: s.type, status: s.status }, []);
+      }
+      return;
+    }
+    var row = [];
+    for (var c = 0; c < lastCol; c++) row.push("");
+    row[idx.id] = newId_(ID_PREFIX.images);
+    row[idx.tool] = s.tool;
+    row[idx.parentId] = s.parentId;
+    row[idx.name] = s.name;
+    row[idx.purpose] = s.purpose || "";
+    row[idx.type] = s.type || "";
+    row[idx.status] = s.status || "Planned";
+    row[idx.estMinutes] = minutes[s.type] !== undefined ? minutes[s.type] : 10;
+    appends.push(row);
+    byKey[k] = { id: row[idx.id], purpose: s.purpose, type: s.type, status: s.status };
+  });
+  if (appends.length) {
+    sh.getRange(sh.getLastRow() + 1, 1, appends.length, lastCol).setValues(appends);
+  }
+}
+
 /** Cycles a slot's status through the given list, creating the slot first if needed. */
 function img_cycleSlot_(tool, parentId, name, purpose, type, states) {
   var existing = img_find_(tool, parentId, name);

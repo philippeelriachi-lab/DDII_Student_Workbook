@@ -45,6 +45,9 @@ function t48_save(payloadJson) {
       deleteRowById_("iterations", id);
       img_deleteForParent_("48 Iterations", id);
     });
+    // Records first, image slots in one batch after — so a slow or failing
+    // slot write can never leave records half-saved.
+    var slots = [];
     (payload.iterations || []).forEach(function (e, i) {
       writeRowByField_("iterations", e.id, {
         order: i + 1, title: e.title || "", session: e.session || "", method: e.method || "",
@@ -55,9 +58,11 @@ function t48_save(payloadJson) {
       }, []);
       var name = e.title || "Untitled iteration";
       T48_SLOTS.forEach(function (s) {
-        img_upsertSlot_("48 Iterations", e.id, s.label, name + " — " + s.label, s.type, e[s.k] || "Planned");
+        slots.push({ tool: "48 Iterations", parentId: e.id, name: s.label,
+          purpose: name + " — " + s.label, type: s.type, status: e[s.k] || "Planned" });
       });
     });
+    img_upsertSlots_(slots);
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();

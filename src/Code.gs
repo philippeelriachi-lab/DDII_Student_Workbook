@@ -213,12 +213,18 @@ function headerIndex_(key) {
   return idx;
 }
 
-/** Finds the 1-based sheet row for a given id in a tab, or 0 if not found. */
+/**
+ * Finds the 1-based sheet row for a given id in a tab, or 0 if not found.
+ * A tab holding only its header has nothing to search — asking for a
+ * zero-row range there throws, which used to abort whole saves mid-way.
+ */
 function findRowById_(key, id) {
   var sh = sheet_(key);
   var idx = headerIndex_(key);
   if (idx.id === undefined) return 0;
-  var ids = sh.getRange(2, idx.id + 1, Math.max(sh.getLastRow() - 1, 0), 1).getValues();
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var ids = sh.getRange(2, idx.id + 1, last - 1, 1).getValues();
   for (var i = 0; i < ids.length; i++) {
     if (String(ids[i][0]) === String(id)) return i + 2;
   }
@@ -236,15 +242,29 @@ function writeRowByField_(key, id, fields, skip) {
   var skipSet = {};
   (skip || []).forEach(function (s) { skipSet[s] = true; });
   var row = findRowById_(key, id);
-  if (!row) {
-    row = sh.getLastRow() + 1;
-    if (idx.id !== undefined) sh.getRange(row, idx.id + 1).setValue(id);
-  }
+  var isNew = !row;
+  if (isNew) row = sh.getLastRow() + 1;
+
+  var byCol = {};
+  if (isNew && idx.id !== undefined) byCol[idx.id] = id;
   Object.keys(fields).forEach(function (f) {
     if (skipSet[f]) return;
     if (idx[f] === undefined) return;
-    sh.getRange(row, idx[f] + 1).setValue(fields[f]);
+    byCol[idx[f]] = fields[f];
   });
+
+  // Write contiguous runs of columns in single calls. Skipped columns break a
+  // run rather than being written over, so formula columns stay untouched.
+  var cols = Object.keys(byCol).map(Number).sort(function (a, b) { return a - b; });
+  var i = 0;
+  while (i < cols.length) {
+    var j = i;
+    while (j + 1 < cols.length && cols[j + 1] === cols[j] + 1) j++;
+    var values = [];
+    for (var c = i; c <= j; c++) values.push(byCol[cols[c]]);
+    sh.getRange(row, cols[i] + 1, 1, values.length).setValues([values]);
+    i = j + 1;
+  }
   return row;
 }
 

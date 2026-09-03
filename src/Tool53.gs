@@ -40,6 +40,9 @@ function t53_save(payloadJson) {
       deleteRowById_("revisions", id);
       img_deleteForParent_("53 Revisions", id);
     });
+    // Records first, image slots in one batch after — so a slow or failing
+    // slot write can never leave records half-saved.
+    var slots = [];
     (payload.entries || []).forEach(function (e) {
       writeRowByField_("revisions", e.id, {
         title: e.title || "", kind: e.kind || "", predicted: e.predicted || "", actual: e.actual || "",
@@ -50,12 +53,17 @@ function t53_save(payloadJson) {
       }, T53_SKIP);
       var title = e.title || "Untitled divergence";
       if (String(e.slotPredicted || "").trim()) {
-        img_upsertSlot_("53 Revisions", e.id, "predicted", title + " — predicted (CLO3D)", "Detail", e.slotPredictedState || "Planned");
+        slots.push({ tool: "53 Revisions", parentId: e.id, name: "predicted",
+          purpose: title + " — predicted (CLO3D)", type: "Detail",
+          status: e.slotPredictedState || "Planned" });
       }
       if (String(e.slotActual || "").trim()) {
-        img_upsertSlot_("53 Revisions", e.id, "actual", title + " — actual (garment)", "Photograph", e.slotActualState || "Planned");
+        slots.push({ tool: "53 Revisions", parentId: e.id, name: "actual",
+          purpose: title + " — actual (garment)", type: "Photograph",
+          status: e.slotActualState || "Planned" });
       }
     });
+    img_upsertSlots_(slots);
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();

@@ -59,6 +59,10 @@ function t47_save(payloadJson) {
       img_deleteForParent_("47 Research", id);
     });
 
+    // Records are written first and image slots registered in one batch after,
+    // so a slow or failing slot write can never leave records half-saved.
+    var slots = [];
+
     (payload.garments || []).forEach(function (g) {
       writeRowByField_("research", g.id, {
         brand: g.brand || "", product: g.product || "", price: g.price || "", url: g.url || "",
@@ -69,7 +73,8 @@ function t47_save(payloadJson) {
       }, []);
       var title = [g.brand, g.product].filter(String).join(" · ") || "Untitled garment";
       T47_SLOTS.forEach(function (s) {
-        img_upsertSlot_("47 Research", g.id, s.label, title + " — " + s.label, "Screenshot", g[s.k] || "Planned");
+        slots.push({ tool: "47 Research", parentId: g.id, name: s.label,
+          purpose: title + " — " + s.label, type: "Screenshot", status: g[s.k] || "Planned" });
       });
     });
 
@@ -77,10 +82,12 @@ function t47_save(payloadJson) {
       writeRowByField_("boardImages", b.id, {
         kind: b.kind || "", name: b.name || "", note: b.note || "", state: b.state || "Planned"
       }, []);
-      img_upsertSlot_("47 Research", b.id, "board", (b.name || b.kind || "Board image"),
-        (b.kind || "Detail"), b.state || "Planned");
+      slots.push({ tool: "47 Research", parentId: b.id, name: "board",
+        purpose: b.name || b.kind || "Board image", type: b.kind || "Detail",
+        status: b.state || "Planned" });
     });
 
+    img_upsertSlots_(slots);
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
