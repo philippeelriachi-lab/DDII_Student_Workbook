@@ -178,7 +178,13 @@ function findPt(id){ var a=allPts(); for(var i=0;i<a.length;i++) if(a[i].id===id
    in flight at the same time can have their responses arrive out of order,
    and the older, less-complete one wins if it arrives last. */
 var gsBusy=false, gsQueue=[];
+/* A save is scheduled 600ms after the last keystroke. If anything else (an
+   Add click, say) is sent before that timer fires, the server would answer
+   without the edit you just typed — and that answer would then overwrite it.
+   So any other call flushes the pending save ahead of itself first. */
+function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
+  if(fnName!=='t46_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -196,7 +202,7 @@ function gsPump(){
 
 function queueSave(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(doSave, 600);
+  saveTimer = setTimeout(function(){ saveTimer=null; doSave(); }, 600);
 }
 function doSave(){
   var payload = {

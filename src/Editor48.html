@@ -162,7 +162,13 @@ function refTitle(id){ for(var i=0;i<refs.length;i++) if(refs[i].id===id) return
    same time can have their responses arrive out of order, and the older,
    less-complete one wins if it arrives last, silently dropping rows. */
 var gsBusy=false, gsQueue=[];
+/* A save is scheduled 600ms after the last keystroke. If anything else (an
+   Add click, say) is sent before that timer fires, the server would answer
+   without the edit you just typed — and that answer would then overwrite it.
+   So any other call flushes the pending save ahead of itself first. */
+function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
+  if(fnName!=='t48_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -178,7 +184,7 @@ function gsPump(){
   runner[job.fnName].apply(runner, job.args);
 }
 
-function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ saveTimer=null; doSave(); },600); }
 function doSave(){
   var payload={meta:meta, iterations:es, deletedIds:deletedIds};
   deletedIds=[];
@@ -387,10 +393,19 @@ function cyc(id,k){ var e=find(id); if(!e) return;
   var i=slotStates.indexOf(e[k]||"Planned"); e[k]=slotStates[(i+1)%slotStates.length]; render(); queueSave(); }
 function del(id){ if(!confirm("Delete this iteration?")) return;
   es=es.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave(); }
+/* Appends only rows the dialog doesn't already know about, so an Add never
+   overwrites edits still sitting in the open cards. Returns the new row. */
+function mergeNew(serverRows, localRows){
+  var have={}; localRows.forEach(function(x){ have[x.id]=true; });
+  var added=null;
+  (serverRows||[]).forEach(function(x){ if(!have[x.id]){ localRows.push(x); added=x; } });
+  return added;
+}
 function dup(id){ var e=find(id); if(!e) return;
   gsCall('t48_addIteration',[],function(json){
-    applyData(json);
-    var c=es[es.length-1];
+    var d=JSON.parse(json);
+    refs=d.refs; methods=d.methods; decisions=d.decisions;
+    var c=mergeNew(d.iterations, es); if(!c) return;
     c.title=e.title; c.session=e.session; c.method=e.method; c.referenceId=e.referenceId;
     c.tried=e.tried; c.revealed=e.revealed; c.decision=e.decision;
     openId=c.id; render(); queueSave();
@@ -411,7 +426,10 @@ function onGroupByMethod(){
   render(); queueSave();
 }
 function onAdd(){ gsCall('t48_addIteration',[],function(json){
-  applyData(json); var last=es[es.length-1]; if(last){ openId=last.id; render(); }
+  var d=JSON.parse(json);
+  refs=d.refs; methods=d.methods; decisions=d.decisions;
+  var added=mergeNew(d.iterations, es); if(added) openId=added.id;
+  render();
 }); }
 
 function setView(v){

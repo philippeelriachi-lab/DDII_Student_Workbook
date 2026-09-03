@@ -216,7 +216,13 @@ function renderSheet(sc){
    while a meta save is in flight) can have their responses arrive out of
    order, and the older, less-complete one wins if it arrives last. */
 var gsBusy=false, gsQueue=[];
+/* A meta save is scheduled 600ms after the last keystroke. If anything else
+   (ticking a check, switching round) is sent before that timer fires, the
+   server would answer without the text you just typed — and that answer
+   would then overwrite it. So any other call flushes it ahead of itself. */
+function flushSave(){ if(metaTimer){ clearTimeout(metaTimer); metaTimer=null; saveMetaNow(); } }
 function gsCall(fnName,args,onSuccess){
+  if(fnName!=='t54_saveMeta') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -239,13 +245,14 @@ function tick(id){
   gsCall('t54_toggleSelf',[id],function(json){ applyData(json); render(); });
 }
 var metaTimer=null;
+function saveMetaNow(){
+  gsCall('t54_saveMeta',[JSON.stringify({
+    name:meta.name, group:meta.group, item:meta.item, gap:meta.gap, round:round
+  })],function(json){ applyData(json); });
+}
 function setMeta(k,v){
   meta[k]=v; clearTimeout(metaTimer);
-  metaTimer=setTimeout(function(){
-    gsCall('t54_saveMeta',[JSON.stringify({
-      name:meta.name, group:meta.group, item:meta.item, gap:meta.gap, round:round
-    })],function(json){ applyData(json); });
-  },600);
+  metaTimer=setTimeout(function(){ metaTimer=null; saveMetaNow(); },600);
 }
 
 function applyData(json){

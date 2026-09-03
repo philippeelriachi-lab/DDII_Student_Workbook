@@ -150,7 +150,13 @@ function dStr(v){return v===null?"":((v>0?"+":"")+v.toFixed(1)+" "+meta.unit);}
    at the same time can have their responses arrive out of order, and the
    older, less-complete one wins if it arrives last, silently dropping rows. */
 var gsBusy=false, gsQueue=[];
+/* A save is scheduled 600ms after the last keystroke. If anything else (an
+   Add click, say) is sent before that timer fires, the server would answer
+   without the edit you just typed — and that answer would then overwrite it.
+   So any other call flushes the pending save ahead of itself first. */
+function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
+  if(fnName!=='t53_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -166,7 +172,7 @@ function gsPump(){
   runner[job.fnName].apply(runner, job.args);
 }
 
-function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ saveTimer=null; doSave(); },600); }
 function doSave(){
   var payload={meta:meta, entries:es, deletedIds:deletedIds};
   deletedIds=[];
@@ -341,7 +347,10 @@ function render(){
   document.getElementById("page").innerHTML = html;
   if(view==="E"){
     document.getElementById("addBtn").onclick=function(){ gsCall('t53_addEntry',[],function(json){
-      applyData(json); var last=es[es.length-1]; if(last){ openId=last.id; render(); } }); };
+      var d=JSON.parse(json);
+      kinds=d.kinds; actions=d.actions; slotStates=d.slotStates;
+      var added=mergeNew(d.entries, es); if(added) openId=added.id;
+      render(); }); };
     document.getElementById("seedBtn").onclick=function(){ gsCall('t53_seedFromBuild',[],function(json){
       var d=JSON.parse(json); applyData(json); render();
       alert(d.added?d.added+" entries created from your construction log. Each still needs what CLO3D predicted, why it diverged, and what you did."
@@ -352,6 +361,14 @@ function render(){
 }
 
 /* ---------- edits ---------- */
+/* Appends only rows the dialog doesn't already know about, so an Add never
+   overwrites edits still sitting in the open cards. Returns the new row. */
+function mergeNew(serverRows, localRows){
+  var have={}; localRows.forEach(function(x){ have[x.id]=true; });
+  var added=null;
+  (serverRows||[]).forEach(function(x){ if(!have[x.id]){ localRows.push(x); added=x; } });
+  return added;
+}
 /* Rebuilding the DOM on re-render would kick focus out of whatever the
    student is typing in, so snapshot/restore the focused field (by its
    data-focus-key) and cursor position across the rebuild. */

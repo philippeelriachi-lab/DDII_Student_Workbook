@@ -151,7 +151,13 @@ function findB(id){ for(var i=0;i<bs.length;i++) if(bs[i].id===id) return bs[i];
    it was actually the older, less complete snapshot. That was silently
    dropping rows. */
 var gsBusy=false, gsQueue=[];
+/* A save is scheduled 600ms after the last keystroke. If anything else (an
+   Add click, say) is sent before that timer fires, the server would answer
+   without the edit you just typed — and that answer would then overwrite it.
+   So any other call flushes the pending save ahead of itself first. */
+function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
+  if(fnName!=='t47_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -167,7 +173,7 @@ function gsPump(){
   runner[job.fnName].apply(runner, job.args);
 }
 
-function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
+function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ saveTimer=null; doSave(); },600); }
 function doSave(){
   var payload={meta:meta, garments:gs, boards:bs,
     deletedGarmentIds:deletedGarmentIds, deletedBoardIds:deletedBoardIds};
@@ -464,11 +470,28 @@ function delG(id){ if(!confirm("Delete this garment?")) return;
 function delB(id){ if(!confirm("Delete this image?")) return;
   bs=bs.filter(function(x){return x.id!==id;}); deletedBoardIds.push(id); render(); queueSave(); }
 
+/* Appends only rows the dialog doesn't already know about, so an Add never
+   overwrites edits still sitting in the open cards. Returns the new row. */
+function mergeNew(serverRows, localRows){
+  var have={}; localRows.forEach(function(x){ have[x.id]=true; });
+  var added=null;
+  (serverRows||[]).forEach(function(x){ if(!have[x.id]){ localRows.push(x); added=x; } });
+  return added;
+}
+function applyLookups(d){
+  archetypes=d.archetypes; boardKinds=d.boardKinds; slotStates=d.slotStates;
+}
 function onAddGarment(){ gsCall('t47_addGarment',[],function(json){
-  applyData(json); var last=gs[gs.length-1]; if(last){ openId=last.id; render(); }
+  var d=JSON.parse(json); applyLookups(d);
+  var added=mergeNew(d.garments, gs);
+  if(added) openId=added.id;
+  render();
 }); }
 function onAddBoard(){ gsCall('t47_addBoard',[],function(json){
-  applyData(json); var last=bs[bs.length-1]; if(last){ openId=last.id; render(); }
+  var d=JSON.parse(json); applyLookups(d);
+  var added=mergeNew(d.boards, bs);
+  if(added) openId=added.id;
+  render();
 }); }
 
 function setView(v){
