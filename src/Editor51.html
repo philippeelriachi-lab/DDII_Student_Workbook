@@ -151,12 +151,33 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
 function mmss(s){s=Math.max(0,Math.round(s)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 function d(){ return rounds[round]; }
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise an autosave and a rehearsal-run save in flight
+   at the same time can have their responses arrive out of order, and the
+   older, less-complete one wins if it arrives last. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
 var deletedQuestionIds=[];
 function doSave(){
   var payload={meta:meta, rounds:rounds, deletedQuestionIds:deletedQuestionIds};
   deletedQuestionIds=[];
-  google.script.run.withFailureHandler(function(e){console.error(e);}).t51_save(JSON.stringify(payload));
+  gsCall('t51_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- plan ---------- */
@@ -362,10 +383,10 @@ function endRun(){
   if(idx<d().secs.length) times.push((performance.now()-secStart)/1000);
   running=false; clearInterval(tick);
   var key=round, snapshot=times.slice();
-  google.script.run.withSuccessHandler(function(json){
+  gsCall('t51_recordRun',[key, JSON.stringify(snapshot)],function(json){
     var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds;
     if(view==="R") render();
-  }).t51_recordRun(key, JSON.stringify(snapshot));
+  });
   render();
 }
 
@@ -379,9 +400,9 @@ document.getElementById("tabP").onclick=function(){setView("P");};
 document.getElementById("tabR").onclick=function(){setView("R");};
 document.getElementById("tabC").onclick=function(){setView("C");};
 
-google.script.run.withSuccessHandler(function(json){
+gsCall('t51_get',[],function(json){
   var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds; render();
-}).t51_get();
+});
 </script>
 </body>
 </html>

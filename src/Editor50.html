@@ -145,12 +145,33 @@ function findM(id){for(var i=0;i<ms.length;i++) if(ms[i].id===id) return ms[i]; 
 function findF(id){for(var i=0;i<fs.length;i++) if(fs[i].id===id) return fs[i]; return null;}
 function refTitle(id){ for(var i=0;i<refs.length;i++) if(refs[i].id===id) return refs[i].title; return ""; }
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise an autosave and an "Add" click in flight at the
+   same time can have their responses arrive out of order, and the older,
+   less-complete one wins if it arrives last, silently dropping rows. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
 function doSave(){
   var payload={meta:meta, materials:ms, finishing:fs,
     deletedMaterialIds:deletedMaterialIds, deletedFinishingIds:deletedFinishingIds};
   deletedMaterialIds=[]; deletedFinishingIds=[];
-  google.script.run.withFailureHandler(function(e){console.error(e);}).t50_save(JSON.stringify(payload));
+  gsCall('t50_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -206,7 +227,7 @@ function selRef(id,val,fn){
     '<option value="">— which reference —</option>'+opts.join("")+'</select>';
 }
 function inp(id,key,val,ph,fn){
-  return '<input type="text" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
+  return '<input type="text" data-focus-key="'+id+':'+key+'" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
     '" oninput="'+(fn||"setM")+'(\''+id+'\',\''+key+'\',this.value)">';
 }
 
@@ -437,8 +458,28 @@ function render(){
 }
 
 /* ---------- edits ---------- */
+/* Rebuilding the DOM on re-render would kick focus out of whatever the
+   student is typing in, so snapshot/restore the focused field (by its
+   data-focus-key) and cursor position across the rebuild. */
+function focusSnapshot(){
+  var el=document.activeElement;
+  if(!el || !el.dataset || !el.dataset.focusKey) return null;
+  return {key:el.dataset.focusKey, start:el.selectionStart, end:el.selectionEnd};
+}
+function focusRestore(snap){
+  if(!snap) return;
+  var el=document.querySelector('[data-focus-key="'+snap.key+'"]');
+  if(!el) return;
+  el.focus();
+  if(typeof snap.start==="number" && el.setSelectionRange){
+    try{ el.setSelectionRange(snap.start, snap.end); }catch(e){}
+  }
+}
 var renderTimer=null;
-function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+function queueRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){ var snap=focusSnapshot(); render(); focusRestore(snap); },500);
+}
 var RER={category:1,source:1,status:1,referenceId:1};
 function setM(id,key,val){var m=findM(id); if(!m) return; m[key]=val;
   if(RER[key]) render();
@@ -456,20 +497,20 @@ function delF(id){ if(!confirm("Delete this operation?")) return;
   fs=fs.filter(function(x){return x.id!==id;}); deletedFinishingIds.push(id); render(); queueSave(); }
 function dupM(id){
   var m=findM(id); if(!m) return;
-  google.script.run.withSuccessHandler(function(json){
+  gsCall('t50_addMaterial',[],function(json){
     applyData(json);
     var c=ms[ms.length-1];
     Object.keys(m).forEach(function(k){ if(k!=="id") c[k]=m[k]; });
     openId=c.id; render(); queueSave();
-  }).t50_addMaterial();
+  });
 }
-function onAddM(){ google.script.run.withSuccessHandler(function(json){
+function onAddM(){ gsCall('t50_addMaterial',[],function(json){
   applyData(json); var last=ms[ms.length-1]; if(last){ openId=last.id; render(); }
-}).t50_addMaterial(); }
-function onAddF(){ google.script.run.withSuccessHandler(function(json){
+}); }
+function onAddF(){ gsCall('t50_addFinishing',[],function(json){
   applyData(json); var last=fs[fs.length-1]; if(last){ openId=last.id; render(); }
-}).t50_addFinishing(); }
-function onStarter(){ google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t50_addStarter(); }
+}); }
+function onStarter(){ gsCall('t50_addStarter',[],function(json){ applyData(json); render(); }); }
 
 function setView(v){
   view=v;
@@ -484,7 +525,7 @@ function applyData(json){
   meta=d.meta; ms=d.materials; fs=d.finishing; refs=d.refs;
   cats=d.cats; types=d.types; sources=d.sources; statuses=d.status; ops=d.ops;
 }
-google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t50_get();
+gsCall('t50_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

@@ -173,6 +173,27 @@ function disagrees(p){ var d=diff(p); return d!==null && Math.abs(d)>tol()+1e-9;
 function allPts(){ var a=[]; groups.forEach(function(gr){ gr.pts.forEach(function(p){ a.push(p); }); }); return a; }
 function findPt(id){ var a=allPts(); for(var i=0;i<a.length;i++) if(a[i].id===id) return a[i]; return null; }
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise an autosave and an "Add a point"/"Clear" click
+   in flight at the same time can have their responses arrive out of order,
+   and the older, less-complete one wins if it arrives last. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(doSave, 600);
@@ -185,7 +206,7 @@ function doSave(){
               enteredInCLO:!!p.enteredInCLO, note:p.note};
     })
   };
-  google.script.run.withFailureHandler(function(err){ console.error(err); }).t46_save(JSON.stringify(payload));
+  gsCall('t46_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- summary ---------- */
@@ -395,13 +416,13 @@ function onAccept(){
 }
 function onClear(){
   if(!confirm("Clear every reading? The subject details stay.")) return;
-  google.script.run.withSuccessHandler(applyData).t46_clearReadings();
+  gsCall('t46_clearReadings',[],applyData);
 }
 function onAddPoint(){
   var label = prompt("What is this point called?"); if(!label) return;
   var hint = prompt("Hint, if it needs one (optional)") || "";
   var avatarField = prompt("Which CLO avatar field does it map to? (optional)") || "";
-  google.script.run.withSuccessHandler(applyData).t46_addPoint(JSON.stringify({label:label,hint:hint,avatarField:avatarField}));
+  gsCall('t46_addPoint',[JSON.stringify({label:label,hint:hint,avatarField:avatarField})],applyData);
 }
 
 document.addEventListener("input",function(e){
@@ -456,7 +477,7 @@ function applyData(json){
   render();
 }
 
-google.script.run.withSuccessHandler(applyData).t46_get();
+gsCall('t46_get',[],applyData);
 </script>
 </body>
 </html>

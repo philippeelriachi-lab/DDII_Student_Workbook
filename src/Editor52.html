@@ -205,11 +205,32 @@ function total(s){return s.prepSec+s.sewSec+s.pressSec;}
 function findS(id){ for(var i=0;i<steps.length;i++) if(steps[i].id===id) return steps[i]; return null; }
 function missS(s){var m=0; if(!String(s.location||"").trim())m++; if(!s.operation)m++; if(!s.pieces.length)m++; return m;}
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise an autosave and an "Add" click in flight at the
+   same time can have their responses arrive out of order, and the older,
+   less-complete one wins if it arrives last, silently dropping rows. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
 function doSave(){
   var payload={meta:meta, pieces:pieces, steps:steps, deletedIds:deletedIds};
   deletedIds=[];
-  google.script.run.withFailureHandler(function(e){console.error(e);}).t52_save(JSON.stringify(payload));
+  gsCall('t52_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- plan ---------- */
@@ -228,7 +249,7 @@ function renderSteps(){
       '<div class="sbody">'+
         '<div class="g2">'+
           '<div class="f"><label>Where on the garment <b>•</b></label>'+
-            '<input type="text" value="'+esc(s.location)+'" placeholder="Side seam / collar stand" '+
+            '<input type="text" data-focus-key="'+s.id+':location" value="'+esc(s.location)+'" placeholder="Side seam / collar stand" '+
             'oninput="setS(\''+s.id+'\',\'location\',this.value)"></div>'+
           '<div class="f"><label>Seam or operation <b>•</b></label>'+
             '<select onchange="setS(\''+s.id+'\',\'operation\',this.value)"><option value="">—</option>'+
@@ -504,12 +525,12 @@ function render(){
 }
 function wireView(){
   if(view==="P"){
-    document.getElementById("addStep").onclick=function(){ google.script.run.withSuccessHandler(function(json){
-      applyData(json); var last=steps[steps.length-1]; if(last){ openId=last.id; render(); } }).t52_addStep(); };
-    document.getElementById("fromSpec").onclick=function(){ google.script.run.withSuccessHandler(function(json){
+    document.getElementById("addStep").onclick=function(){ gsCall('t52_addStep',[],function(json){
+      applyData(json); var last=steps[steps.length-1]; if(last){ openId=last.id; render(); } }); };
+    document.getElementById("fromSpec").onclick=function(){ gsCall('t52_fromFinishing',[],function(json){
       var d=JSON.parse(json); applyData(json); render();
       alert((d.added||0)+" operation"+(d.added===1?"":"s")+" brought in from Tool 50.");
-    }).t52_fromFinishing(); };
+    }); };
     document.getElementById("shirtSeq").onclick=onShirtSeq;
   }
   if(view==="L"){
@@ -533,8 +554,28 @@ function wireView(){
 }
 
 /* ---------- edits: plan ---------- */
+/* Rebuilding the DOM on re-render would kick focus out of whatever the
+   student is typing in, so snapshot/restore the focused field (by its
+   data-focus-key) and cursor position across the rebuild. */
+function focusSnapshot(){
+  var el=document.activeElement;
+  if(!el || !el.dataset || !el.dataset.focusKey) return null;
+  return {key:el.dataset.focusKey, start:el.selectionStart, end:el.selectionEnd};
+}
+function focusRestore(snap){
+  if(!snap) return;
+  var el=document.querySelector('[data-focus-key="'+snap.key+'"]');
+  if(!el) return;
+  el.focus();
+  if(typeof snap.start==="number" && el.setSelectionRange){
+    try{ el.setSelectionRange(snap.start, snap.end); }catch(e){}
+  }
+}
 var renderTimer=null;
-function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+function queueRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){ var snap=focusSnapshot(); render(); focusRestore(snap); },500);
+}
 function setS(id,key,val){ var s=findS(id); if(!s) return; s[key]=val;
   if(key==="operation") render();
   else if(key==="location") queueRender();
@@ -549,13 +590,13 @@ function delS(id){ if(!confirm("Delete this step?")) return;
   steps=steps.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave(); }
 function dupS(id){
   var s=findS(id); if(!s) return;
-  google.script.run.withSuccessHandler(function(json){
+  gsCall('t52_addStep',[],function(json){
     applyData(json);
     var c=steps[steps.length-1];
     ["location","operation","thread","settings"].forEach(function(k){ c[k]=s[k]; });
     c.pieces=s.pieces.slice(); c.prep=s.prep.slice(); c.press=s.press.slice();
     openId=c.id; render(); queueSave();
-  }).t52_addStep();
+  });
 }
 function mv(id,dir){ var i=steps.findIndex(function(x){return x.id===id;}); var j=i+dir;
   if(j<0||j>=steps.length) return; var t=steps[i]; steps[i]=steps[j]; steps[j]=t; render(); queueSave(); }
@@ -564,8 +605,7 @@ function onShirtSeq(){
   var payload=SHIRT_SEQ.map(function(r){
     return {location:r[0], operation:r[1], pieces:r[2], prep:r[3], press:r[4]};
   });
-  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); })
-    .t52_addSteps(JSON.stringify(payload));
+  gsCall('t52_addSteps',[JSON.stringify(payload)],function(json){ applyData(json); render(); });
 }
 
 /* ---------- edits: log ---------- */
@@ -600,11 +640,11 @@ function setAtt(a){ var s=findS(active); if(s){ s.attempt=a; render(); queueSave
 function tickProb(p){ var s=findS(active); if(!s) return;
   var i=s.problems.indexOf(p); if(i<0) s.problems.push(p); else s.problems.splice(i,1); render(); queueSave(); }
 function onAddUnplanned(){
-  google.script.run.withSuccessHandler(function(json){
+  gsCall('t52_addStep',[JSON.stringify({unplanned:true,location:"Unplanned step"})],function(json){
     applyData(json);
     var s=steps[steps.length-1]; s.unplanned=true; s.location="Unplanned step";
     startStep(s.id); queueSave();
-  }).t52_addStep(JSON.stringify({unplanned:true,location:"Unplanned step"}));
+  });
 }
 
 /* ---------- edits: review/costing/details ---------- */
@@ -638,7 +678,7 @@ function applyData(json){
   meta=d.meta; pieces=d.pieces; steps=d.steps;
   seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
 }
-google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t52_get();
+gsCall('t52_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

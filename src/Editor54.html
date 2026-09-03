@@ -211,19 +211,40 @@ function renderSheet(sc){
     (String(meta.gap||"").trim()?'<h4>What I know is not ready</h4><p style="font-size:11.5px;line-height:1.5;white-space:pre-wrap">'+esc(meta.gap)+'</p>':'');
 }
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise two overlapping calls (e.g. ticking a checkbox
+   while a meta save is in flight) can have their responses arrive out of
+   order, and the older, less-complete one wins if it arrives last. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function setRound(r){
-  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_setRound(r);
+  gsCall('t54_setRound',[r],function(json){ applyData(json); render(); });
 }
 function tick(id){
-  google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_toggleSelf(id);
+  gsCall('t54_toggleSelf',[id],function(json){ applyData(json); render(); });
 }
 var metaTimer=null;
 function setMeta(k,v){
   meta[k]=v; clearTimeout(metaTimer);
   metaTimer=setTimeout(function(){
-    google.script.run.withSuccessHandler(function(json){ applyData(json); }).t54_saveMeta(JSON.stringify({
+    gsCall('t54_saveMeta',[JSON.stringify({
       name:meta.name, group:meta.group, item:meta.item, gap:meta.gap, round:round
-    }));
+    })],function(json){ applyData(json); });
   },600);
 }
 
@@ -231,7 +252,7 @@ function applyData(json){
   var d=JSON.parse(json);
   round=d.round; meta=d.meta; groups=d.groups; shots=d.shots;
 }
-google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t54_get("mid");
+gsCall('t54_get',["mid"],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

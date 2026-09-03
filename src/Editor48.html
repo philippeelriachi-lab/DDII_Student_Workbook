@@ -157,11 +157,32 @@ function threeViews(e){ return got(e,"slotFront")&&got(e,"slotBack")&&got(e,"slo
 function find(id){ for(var i=0;i<es.length;i++) if(es[i].id===id) return es[i]; return null; }
 function refTitle(id){ for(var i=0;i<refs.length;i++) if(refs[i].id===id) return refs[i].title; return ""; }
 
+/* Every server call goes through this queue so responses always come back in
+   dispatch order — otherwise an autosave and an "Add" click in flight at the
+   same time can have their responses arrive out of order, and the older,
+   less-complete one wins if it arrives last, silently dropping rows. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
 function doSave(){
   var payload={meta:meta, iterations:es, deletedIds:deletedIds};
   deletedIds=[];
-  google.script.run.withFailureHandler(function(e){console.error(e);}).t48_save(JSON.stringify(payload));
+  gsCall('t48_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -213,7 +234,7 @@ function renderEntries(){
       '<div class="bodyc">'+
         '<div class="g3">'+
           '<div class="f"><label>What it is <b>•</b></label>'+
-            '<input type="text" value="'+esc(e.title)+'" placeholder="Short name you will recognise later" '+
+            '<input type="text" data-focus-key="'+e.id+':title" value="'+esc(e.title)+'" placeholder="Short name you will recognise later" '+
             'oninput="setF(\''+e.id+'\',\'title\',this.value)"></div>'+
           '<div class="f"><label>Session</label><select onchange="setF(\''+e.id+'\',\'session\',this.value)">'+
             ['','5','6','own time'].map(function(o){
@@ -335,8 +356,28 @@ function render(){
 }
 
 /* ---------- edits ---------- */
+/* Rebuilding the DOM on re-render would kick focus out of whatever the
+   student is typing in, so snapshot/restore the focused field (by its
+   data-focus-key) and cursor position across the rebuild. */
+function focusSnapshot(){
+  var el=document.activeElement;
+  if(!el || !el.dataset || !el.dataset.focusKey) return null;
+  return {key:el.dataset.focusKey, start:el.selectionStart, end:el.selectionEnd};
+}
+function focusRestore(snap){
+  if(!snap) return;
+  var el=document.querySelector('[data-focus-key="'+snap.key+'"]');
+  if(!el) return;
+  el.focus();
+  if(typeof snap.start==="number" && el.setSelectionRange){
+    try{ el.setSelectionRange(snap.start, snap.end); }catch(e){}
+  }
+}
 var renderTimer=null;
-function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+function queueRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){ var snap=focusSnapshot(); render(); focusRestore(snap); },500);
+}
 function setF(id,key,val){ var e=find(id); if(!e) return; e[key]=val;
   if(key==="method"||key==="decision"||key==="includeInPitch"||key==="referenceId") render();
   else if(key==="title") queueRender();
@@ -347,13 +388,13 @@ function cyc(id,k){ var e=find(id); if(!e) return;
 function del(id){ if(!confirm("Delete this iteration?")) return;
   es=es.filter(function(x){return x.id!==id;}); deletedIds.push(id); render(); queueSave(); }
 function dup(id){ var e=find(id); if(!e) return;
-  google.script.run.withSuccessHandler(function(json){
+  gsCall('t48_addIteration',[],function(json){
     applyData(json);
     var c=es[es.length-1];
     c.title=e.title; c.session=e.session; c.method=e.method; c.referenceId=e.referenceId;
     c.tried=e.tried; c.revealed=e.revealed; c.decision=e.decision;
     openId=c.id; render(); queueSave();
-  }).t48_addIteration();
+  });
 }
 function mv(id,d){
   var i=es.findIndex(function(x){return x.id===id;}); var j=i+d;
@@ -369,9 +410,9 @@ function onGroupByMethod(){
   });
   render(); queueSave();
 }
-function onAdd(){ google.script.run.withSuccessHandler(function(json){
+function onAdd(){ gsCall('t48_addIteration',[],function(json){
   applyData(json); var last=es[es.length-1]; if(last){ openId=last.id; render(); }
-}).t48_addIteration(); }
+}); }
 
 function setView(v){
   view=v;
@@ -388,7 +429,7 @@ function applyData(json){
   meta=d.meta; es=d.iterations; refs=d.refs; methods=d.methods; decisions=d.decisions;
   slotStates=(d.slotStates||["Planned","Captured","On the board"]).slice(0,2);
 }
-google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t48_get();
+gsCall('t48_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>
