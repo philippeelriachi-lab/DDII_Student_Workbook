@@ -144,12 +144,35 @@ function threeViews(g){ return slotGot(g,"slotFront")&&slotGot(g,"slotBack")&&(s
 function findG(id){ for(var i=0;i<gs.length;i++) if(gs[i].id===id) return gs[i]; return null; }
 function findB(id){ for(var i=0;i<bs.length;i++) if(bs[i].id===id) return bs[i]; return null; }
 
+/* Every server call goes through this queue so responses always come back
+   in the order they were sent — otherwise two overlapping calls (e.g. an
+   autosave firing while "Add a board image" is in flight) can have their
+   responses arrive out of order, and the later one to arrive wins even if
+   it was actually the older, less complete snapshot. That was silently
+   dropping rows. */
+var gsBusy=false, gsQueue=[];
+function gsCall(fnName,args,onSuccess){
+  gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
+  gsPump();
+}
+function gsPump(){
+  if(gsBusy || !gsQueue.length) return;
+  gsBusy=true;
+  var job=gsQueue.shift();
+  var runner=google.script.run.withSuccessHandler(function(res){
+    gsBusy=false; if(job.onSuccess) job.onSuccess(res); gsPump();
+  }).withFailureHandler(function(err){
+    gsBusy=false; console.error(err); gsPump();
+  });
+  runner[job.fnName].apply(runner, job.args);
+}
+
 function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,600); }
 function doSave(){
   var payload={meta:meta, garments:gs, boards:bs,
     deletedGarmentIds:deletedGarmentIds, deletedBoardIds:deletedBoardIds};
   deletedGarmentIds=[]; deletedBoardIds=[];
-  google.script.run.withFailureHandler(function(e){console.error(e);}).t47_save(JSON.stringify(payload));
+  gsCall('t47_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -178,13 +201,24 @@ function renderReqs(){
 }
 
 /* ---------- garments ---------- */
-function selHTML(id,key,opts,val,blank){
-  return '<select onchange="setG(\''+id+'\',\''+key+'\',this.value)"><option value="">'+(blank||"—")+'</option>'+
-    opts.map(function(o){return '<option'+(val===o?" selected":"")+'>'+esc(o)+'</option>';}).join("")+'</select>';
-}
 function inpHTML(id,key,val,ph){
-  return '<input type="text" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
+  return '<input type="text" data-focus-key="'+id+':'+key+'" value="'+esc(val)+'" placeholder="'+esc(ph||"")+
     '" oninput="setG(\''+id+'\',\''+key+'\',this.value)">';
+}
+/* "Something else" reveals a free-text box; whatever is typed there becomes the stored archetype. */
+function archetypeField(scope,id,val,setFn){
+  var isOther = val==="Something else" || (val && archetypes.indexOf(val)<0);
+  var selectVal = isOther ? "Something else" : val;
+  var html = '<select onchange="'+setFn+'(\''+id+'\',\'archetype\',this.value)"><option value="">—</option>'+
+    archetypes.map(function(o){return '<option'+(selectVal===o?" selected":"")+'>'+esc(o)+'</option>';}).join("")+
+    '</select>';
+  if(isOther){
+    var custom = val==="Something else" ? "" : val;
+    html += '<input type="text" data-focus-key="'+scope+':'+id+':archetypeOther" style="margin-top:6px" '+
+      'placeholder="Say what it is" value="'+esc(custom)+'" '+
+      'oninput="'+setFn+'(\''+id+'\',\'archetype\',this.value||\'Something else\')">';
+  }
+  return html;
 }
 function renderGarments(){
   if(!gs.length) return '<div class="empty">Nothing captured yet. Five garments, each from a brand\'s own product page.</div>';
@@ -211,7 +245,7 @@ function renderGarments(){
         '</div>'+
         '<div class="g2">'+
           '<div class="f mono"><label>Source</label>'+inpHTML(g.id,"url",g.url,"https://")+'</div>'+
-          '<div class="f"><label>Archetype</label>'+selHTML(g.id,"archetype",archetypes,g.archetype)+'</div>'+
+          '<div class="f"><label>Archetype</label>'+archetypeField("g",g.id,g.archetype,"setG")+'</div>'+
         '</div>'+
         '<div class="slots">'+slots+'</div>'+
         '<div class="hint" style="font-size:10.5px;color:var(--soft);margin-bottom:9px">'+
@@ -253,7 +287,7 @@ function renderBoards(){
       '<div class="bodyc">'+
         '<div class="g3">'+
           '<div class="f"><label>What it shows <b>•</b></label>'+
-            '<input type="text" value="'+esc(b.name)+'" placeholder="Herringbone twill, close" '+
+            '<input type="text" data-focus-key="b:'+b.id+':name" value="'+esc(b.name)+'" placeholder="Herringbone twill, close" '+
             'oninput="setB(\''+b.id+'\',\'name\',this.value)"></div>'+
           '<div class="f"><label>Kind <b>•</b></label>'+
             '<select onchange="setB(\''+b.id+'\',\'kind\',this.value)"><option value="">—</option>'+
@@ -265,7 +299,7 @@ function renderBoards(){
             '</select></div>'+
         '</div>'+
         '<div class="f"><label>Why it is on the board</label>'+
-          '<input type="text" value="'+esc(b.note)+'" placeholder="What you are taking from it" '+
+          '<input type="text" data-focus-key="b:'+b.id+':note" value="'+esc(b.note)+'" placeholder="What you are taking from it" '+
           'oninput="setB(\''+b.id+'\',\'note\',this.value)"></div>'+
         '<div class="bar2" style="margin:0"><button class="a q d" onclick="delB(\''+b.id+'\')">Delete</button></div>'+
       '</div></div>';
@@ -306,24 +340,22 @@ function renderDirection(){
   return '<p class="lbl">What you are setting out to make</p>'+
     '<div class="card">'+
       '<div class="f"><label>Direction, in one sentence <b>•</b></label>'+
-        '<textarea rows="2" placeholder="You will say this out loud at Session 4" '+
+        '<textarea data-focus-key="meta:direction" rows="2" placeholder="You will say this out loud at Session 4" '+
         'oninput="setMeta(\'direction\',this.value)">'+esc(meta.direction)+'</textarea>'+
         '<div class="hint">Write it before you gather, then rewrite it after. If it did not change, '+
         'you were shopping for evidence rather than researching.</div></div>'+
       '<div class="g2">'+
         '<div class="f"><label>Archetype you are claiming</label>'+
-          '<select onchange="setMeta(\'archetype\',this.value)"><option value="">—</option>'+
-          archetypes.map(function(a){return '<option'+(meta.archetype===a?" selected":"")+'>'+esc(a)+'</option>';}).join("")+
-          '</select></div>'+
+          archetypeField("meta","x",meta.archetype,"setMetaArchetype")+'</div>'+
         '<div class="f"><label>Your name</label>'+
-          '<input type="text" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
+          '<input type="text" data-focus-key="meta:name" value="'+esc(meta.name)+'" oninput="setMeta(\'name\',this.value)"></div>'+
       '</div>'+
     '</div>'+
     '<p class="lbl">What your references actually are</p>'+
     '<div class="card">'+
       '<div class="spread">'+spread+'</div>'+verdict+
       '<div class="f" style="margin-top:13px"><label>If you are combining archetypes, say why</label>'+
-        '<textarea rows="2" placeholder="A camp collar on an overshirt body, because…" '+
+        '<textarea data-focus-key="meta:combineWhy" rows="2" placeholder="A camp collar on an overshirt body, because…" '+
         'oninput="setMeta(\'combineWhy\',this.value)">'+esc(meta.combineWhy)+'</textarea>'+
         '<div class="hint">Combining deliberately is a direction. Combining without noticing reads as undecided, '+
         'and that is the difference the criterion is looking for.</div></div>'+
@@ -385,19 +417,40 @@ function render(){
 }
 
 /* ---------- edits ---------- */
+/* Re-rendering rebuilds the DOM, which would kick focus out of whatever the
+   student is typing in. These wrappers snapshot the focused field (by its
+   data-focus-key) and cursor position, then restore both after the rebuild —
+   whether that rebuild happens right away or after the debounce below fires. */
+function focusSnapshot(){
+  var el=document.activeElement;
+  if(!el || !el.dataset || !el.dataset.focusKey) return null;
+  return {key:el.dataset.focusKey, start:el.selectionStart, end:el.selectionEnd};
+}
+function focusRestore(snap){
+  if(!snap) return;
+  var el=document.querySelector('[data-focus-key="'+snap.key+'"]');
+  if(!el) return;
+  el.focus();
+  if(typeof snap.start==="number" && el.setSelectionRange){
+    try{ el.setSelectionRange(snap.start, snap.end); }catch(e){}
+  }
+}
 var renderTimer=null;
-function queueRender(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,500); }
+function queueRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(function(){ var snap=focusSnapshot(); render(); focusRestore(snap); },500);
+}
 function queueRenderKeepScroll(){
   clearTimeout(renderTimer);
-  renderTimer=setTimeout(function(){ var scroll=window.scrollY; render(); window.scrollTo(0,scroll); },500);
+  renderTimer=setTimeout(function(){
+    var snap=focusSnapshot(), scroll=window.scrollY;
+    render(); window.scrollTo(0,scroll); focusRestore(snap);
+  },500);
 }
-function setMeta(k,v){ meta[k]=v;
-  if(k==="archetype") render();
-  else if(view==="D") queueRenderKeepScroll();
-  queueSave(); }
+function setMeta(k,v){ meta[k]=v; queueRenderKeepScroll(); queueSave(); }
+function setMetaArchetype(id,key,val){ setMeta("archetype", val); }
 function setG(id,key,val){ var g=findG(id); if(!g) return; g[key]=val;
-  if(key==="archetype") render();
-  else if(key==="brand"||key==="product") queueRender();
+  if(key==="brand"||key==="product"||key==="archetype") queueRender();
   queueSave(); }
 function setB(id,key,val){ var b=findB(id); if(!b) return; b[key]=val;
   if(key==="kind"||key==="state") render();
@@ -411,12 +464,12 @@ function delG(id){ if(!confirm("Delete this garment?")) return;
 function delB(id){ if(!confirm("Delete this image?")) return;
   bs=bs.filter(function(x){return x.id!==id;}); deletedBoardIds.push(id); render(); queueSave(); }
 
-function onAddGarment(){ google.script.run.withSuccessHandler(function(json){
+function onAddGarment(){ gsCall('t47_addGarment',[],function(json){
   applyData(json); var last=gs[gs.length-1]; if(last){ openId=last.id; render(); }
-}).t47_addGarment(); }
-function onAddBoard(){ google.script.run.withSuccessHandler(function(json){
+}); }
+function onAddBoard(){ gsCall('t47_addBoard',[],function(json){
   applyData(json); var last=bs[bs.length-1]; if(last){ openId=last.id; render(); }
-}).t47_addBoard(); }
+}); }
 
 function setView(v){
   view=v;
@@ -434,7 +487,7 @@ function applyData(json){
   meta=d.meta; gs=d.garments; bs=d.boards;
   archetypes=d.archetypes; boardKinds=d.boardKinds; slotStates=d.slotStates;
 }
-google.script.run.withSuccessHandler(function(json){ applyData(json); render(); }).t47_get();
+gsCall('t47_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>
