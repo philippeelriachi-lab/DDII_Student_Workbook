@@ -1,15 +1,15 @@
 /**
- * Tool53.gs — Revision Log.
+ * ToolH.gs — Revision Log.
  * Revisions columns: id, title, kind, predicted, actual, point, digitalVal,
  * physicalVal, delta (formula — never write), why, action, detail,
  * slotPredicted, slotPredictedState, slotActual, slotActualState.
- * "Seed from Tool 52" reads the Build tab directly — same workbook, no file
+ * "Seed from Tool G" reads the Build tab directly — same workbook, no file
  * upload needed. Named slots mirror into the Images tab.
  */
 
-var T53_SKIP = ["delta"];
+var TH_SKIP = ["delta"];
 
-function t53_get() {
+function tH_get() {
   var cfg = getConfig_();
   var lookups = getLookups_();
   return JSON.stringify({
@@ -24,7 +24,7 @@ function t53_get() {
   });
 }
 
-function t53_save(payloadJson) {
+function tH_save(payloadJson) {
   var payload = JSON.parse(payloadJson);
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
@@ -50,7 +50,7 @@ function t53_save(payloadJson) {
         why: e.why || "", action: e.action || "", detail: e.detail || "",
         slotPredicted: (e.slotPredicted || "").trim(), slotPredictedState: e.slotPredictedState || "Planned",
         slotActual: (e.slotActual || "").trim(), slotActualState: e.slotActualState || "Planned"
-      }, T53_SKIP);
+      }, TH_SKIP);
       var title = e.title || "Untitled divergence";
       if (String(e.slotPredicted || "").trim()) {
         slots.push({ tool: "53 Revisions", parentId: e.id, name: "predicted",
@@ -68,10 +68,10 @@ function t53_save(payloadJson) {
   } finally {
     lock.releaseLock();
   }
-  return t53_get();
+  return tH_get();
 }
 
-function t53_addEntry() {
+function tH_addEntry() {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
@@ -88,11 +88,11 @@ function t53_addEntry() {
   } finally {
     lock.releaseLock();
   }
-  return t53_get();
+  return tH_get();
 }
 
 /** Creates an entry for every deviation the Build tab already recorded. */
-function t53_seedFromBuild() {
+function tH_seedFromBuild() {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   var added = 0;
@@ -133,7 +133,7 @@ function t53_seedFromBuild() {
   } finally {
     lock.releaseLock();
   }
-  var out = JSON.parse(t53_get());
+  var out = JSON.parse(tH_get());
   out.added = added;
   return JSON.stringify(out);
 }

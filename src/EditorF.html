@@ -142,7 +142,7 @@ button.a:disabled{opacity:.35;cursor:default}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 51</span>
+  <span class="num">Tool F</span>
   <h1>Technical Pitch Planner</h1>
 </div>
 <div class="tabs">
@@ -190,7 +190,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t51_save') flushSave();
+  if(fnName!=='tF_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -211,7 +211,7 @@ var deletedQuestionIds=[];
 function doSave(){
   var payload={meta:meta, rounds:rounds, deletedQuestionIds:deletedQuestionIds};
   deletedQuestionIds=[];
-  gsCall('t51_save',[JSON.stringify(payload)]);
+  gsCall('tF_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- plan ---------- */
@@ -302,7 +302,7 @@ function renderTimer(){
 function renderRuns(){
   var D2=d();
   var any = D2.secs.some(function(s){ return s.lastActualSec!==undefined && s.lastActualSec!==""; });
-  if(!D2.rehearsals || !any) return '<div class="empty">No rehearsals yet. Tool 54 asks whether you have practised aloud — this is where you can answer honestly.</div>';
+  if(!D2.rehearsals || !any) return '<div class="empty">No rehearsals yet. Tool I asks whether you have practised aloud — this is where you can answer honestly.</div>';
   var lastTotal = D2.secs.reduce(function(a,s){return a+(parseFloat(s.lastActualSec)||0);},0);
   return '<p class="lbl">Last run</p><div class="card">'+
     '<p style="font-family:var(--mono);font-size:11px;color:var(--soft);margin:0 0 4px">'+
@@ -340,7 +340,7 @@ function renderSheet(){
   return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
     '<div class="sheet">'+
     '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
-    '<span class="n">Tool 51 · cue sheet</span></div>'+
+    '<span class="n">Tool F · cue sheet</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>'+esc(D2.label)+'</span>'+
       '<span>'+mmss(tot)+' planned of '+mmss(D2.budget)+'</span>'+
@@ -417,7 +417,7 @@ function endRun(){
   if(idx<d().secs.length) times.push((performance.now()-secStart)/1000);
   running=false; clearInterval(tick);
   var key=round, snapshot=times.slice();
-  gsCall('t51_recordRun',[key, JSON.stringify(snapshot)],function(json){
+  gsCall('tF_recordRun',[key, JSON.stringify(snapshot)],function(json){
     var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds;
     if(view==="R") render();
   });
@@ -434,7 +434,7 @@ document.getElementById("tabP").onclick=function(){setView("P");};
 document.getElementById("tabR").onclick=function(){setView("R");};
 document.getElementById("tabC").onclick=function(){setView("C");};
 
-gsCall('t51_get',[],function(json){
+gsCall('tF_get',[],function(json){
   var d0=JSON.parse(json); meta=d0.meta; rounds=d0.rounds; render();
 });
 </script>

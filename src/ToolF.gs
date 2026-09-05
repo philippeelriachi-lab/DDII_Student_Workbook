@@ -1,5 +1,5 @@
 /**
- * Tool51.gs — Technical Pitch Planner.
+ * ToolF.gs — Technical Pitch Planner.
  * Pitch columns: id, round, kind, order, title, say, show, plannedSec,
  * lastActualSec, rehearsals.
  * One row per section (kind "Section", fixed structural template below) or
@@ -9,8 +9,8 @@
  * lookup list.
  */
 
-var T51_ROUND_KEYS = ["pitch", "midterm", "final"];
-var T51_ROUND_TEMPLATE = {
+var TF_ROUND_KEYS = ["pitch", "midterm", "final"];
+var TF_ROUND_TEMPLATE = {
   pitch: {
     label: "Session 7 · Direction pitch", budget: 180, unresolvedKey: "unresolvedPitch",
     secs: [
@@ -47,22 +47,22 @@ var T51_ROUND_TEMPLATE = {
   }
 };
 
-function t51_roundLabel_(key, lookupLabels) {
-  var i = T51_ROUND_KEYS.indexOf(key);
+function tF_roundLabel_(key, lookupLabels) {
+  var i = TF_ROUND_KEYS.indexOf(key);
   if (lookupLabels && lookupLabels[i]) return lookupLabels[i];
-  return T51_ROUND_TEMPLATE[key].label;
+  return TF_ROUND_TEMPLATE[key].label;
 }
 
-function t51_get() {
+function tF_get() {
   var cfg = getConfig_();
   var lookups = getLookups_();
   var labels = lookups.pitchRounds || [];
   var rows = readRows_("pitch");
 
   var rounds = {};
-  T51_ROUND_KEYS.forEach(function (key) {
-    var tmpl = T51_ROUND_TEMPLATE[key];
-    var label = t51_roundLabel_(key, labels);
+  TF_ROUND_KEYS.forEach(function (key) {
+    var tmpl = TF_ROUND_TEMPLATE[key];
+    var label = tF_roundLabel_(key, labels);
     var secRows = rows.filter(function (r) { return r.round === label && r.kind === "Section"; });
     var qRows = rows.filter(function (r) { return r.round === label && r.kind === "Question"; })
       .sort(function (a, b) { return (parseFloat(a.order) || 0) - (parseFloat(b.order) || 0); });
@@ -92,7 +92,7 @@ function t51_get() {
   });
 }
 
-function t51_save(payloadJson) {
+function tF_save(payloadJson) {
   var payload = JSON.parse(payloadJson);
   var lookups = getLookups_();
   var labels = lookups.pitchRounds || [];
@@ -104,11 +104,11 @@ function t51_save(payloadJson) {
     }
     (payload.deletedQuestionIds || []).forEach(function (id) { deleteRowById_("pitch", id); });
 
-    T51_ROUND_KEYS.forEach(function (key) {
+    TF_ROUND_KEYS.forEach(function (key) {
       var r = payload.rounds && payload.rounds[key];
       if (!r) return;
-      var label = t51_roundLabel_(key, labels);
-      var tmpl = T51_ROUND_TEMPLATE[key];
+      var label = tF_roundLabel_(key, labels);
+      var tmpl = TF_ROUND_TEMPLATE[key];
       var cfgPatch = {};
       cfgPatch[tmpl.unresolvedKey] = r.unres || "";
       setConfig_(cfgPatch);
@@ -137,20 +137,20 @@ function t51_save(payloadJson) {
   } finally {
     lock.releaseLock();
   }
-  return t51_get();
+  return tF_get();
 }
 
 /** Records one completed rehearsal run's per-section actual times for a round. */
-function t51_recordRun(key, timesJson) {
+function tF_recordRun(key, timesJson) {
   var times = JSON.parse(timesJson);
   var lookups = getLookups_();
-  var label = t51_roundLabel_(key, lookups.pitchRounds || []);
+  var label = tF_roundLabel_(key, lookups.pitchRounds || []);
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
     var existingSections = readRows_("pitch").filter(function (x) { return x.round === label && x.kind === "Section"; });
     var rehearsals = existingSections.reduce(function (m, r) { return Math.max(m, parseFloat(r.rehearsals) || 0); }, 0) + 1;
-    var tmpl = T51_ROUND_TEMPLATE[key];
+    var tmpl = TF_ROUND_TEMPLATE[key];
     tmpl.secs.forEach(function (s, i) {
       var row = existingSections.filter(function (x) { return (parseFloat(x.order) || 0) === i; })[0];
       var id = row ? row.id : newId_(ID_PREFIX.pitch);
@@ -166,5 +166,5 @@ function t51_recordRun(key, timesJson) {
   } finally {
     lock.releaseLock();
   }
-  return t51_get();
+  return tF_get();
 }

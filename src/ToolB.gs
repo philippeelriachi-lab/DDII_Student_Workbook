@@ -1,23 +1,23 @@
 /**
- * Tool47.gs — Product Page Research Capture.
+ * ToolB.gs — Product Page Research Capture.
  * Research columns: id, brand, product, price, url, archetype, description,
  * composition, construction, care, want, slotFront, slotBack, slotSide, slotDetail.
  * BoardImages columns: id, kind, name, note, state.
  *
  * Garment view slots and board images are the tab's own columns (authoritative,
  * cycled inline) and are also mirrored into the Images tab — the shared shot
- * list — so Tool 54 and the Image schedule can see them without reading this
+ * list — so Tool I and the Image schedule can see them without reading this
  * tab's internals.
  */
 
-var T47_SLOTS = [
+var TB_SLOTS = [
   { k: "slotFront", label: "Front", req: true },
   { k: "slotBack", label: "Back", req: true },
   { k: "slotSide", label: "Side", req: false },
   { k: "slotDetail", label: "Detail", req: false }
 ];
 
-function t47_get() {
+function tB_get() {
   var cfg = getConfig_();
   var lookups = getLookups_();
   var meta = {
@@ -36,7 +36,7 @@ function t47_get() {
   });
 }
 
-function t47_save(payloadJson) {
+function tB_save(payloadJson) {
   var payload = JSON.parse(payloadJson);
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
@@ -72,7 +72,7 @@ function t47_save(payloadJson) {
         slotSide: g.slotSide || "Planned", slotDetail: g.slotDetail || "Planned"
       }, []);
       var title = [g.brand, g.product].filter(String).join(" · ") || "Untitled garment";
-      T47_SLOTS.forEach(function (s) {
+      TB_SLOTS.forEach(function (s) {
         slots.push({ tool: "47 Research", parentId: g.id, name: s.label,
           purpose: title + " — " + s.label, type: "Screenshot", status: g[s.k] || "Planned" });
       });
@@ -92,10 +92,10 @@ function t47_save(payloadJson) {
   } finally {
     lock.releaseLock();
   }
-  return t47_get();
+  return tB_get();
 }
 
-function t47_addGarment() {
+function tB_addGarment() {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
@@ -112,10 +112,10 @@ function t47_addGarment() {
   } finally {
     lock.releaseLock();
   }
-  return t47_get();
+  return tB_get();
 }
 
-function t47_addBoard() {
+function tB_addBoard() {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
@@ -131,5 +131,5 @@ function t47_addBoard() {
   } finally {
     lock.releaseLock();
   }
-  return t47_get();
+  return tB_get();
 }

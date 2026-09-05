@@ -158,7 +158,7 @@ button.a:disabled{opacity:.35;cursor:default}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 52</span>
+  <span class="num">Tool G</span>
   <h1>Construction Log</h1>
 </div>
 <div class="tabs">
@@ -245,7 +245,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t52_save') flushSave();
+  if(fnName!=='tG_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -265,12 +265,12 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ 
 function doSave(){
   var payload={meta:meta, pieces:pieces, steps:steps, deletedIds:deletedIds};
   deletedIds=[];
-  gsCall('t52_save',[JSON.stringify(payload)]);
+  gsCall('tG_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- plan ---------- */
 function renderSteps(){
-  if(!steps.length) return '<div class="empty">No steps yet. Build from your Tool 50 finishing schedule, or start with a standard shirt sequence and change it to match what you have actually made.</div>';
+  if(!steps.length) return '<div class="empty">No steps yet. Build from your Tool E finishing schedule, or start with a standard shirt sequence and change it to match what you have actually made.</div>';
   return steps.map(function(s,i){
     var bad=missS(s), open=s.id===openId;
     return '<div class="step '+(open?"open ":"")+(bad?"bad":"good")+'">'+
@@ -488,7 +488,7 @@ function renderSheet(){
   return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
     '<div class="sheet">'+
     '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
-    '<span class="n">Tool 52 · construction log</span></div>'+
+    '<span class="n">Tool G · construction log</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>'+(esc(meta.route)||"route not set")+'</span>'+
       '<span>'+steps.length+' steps · '+fmtMin(tot)+' min hands-on</span>'+
@@ -548,7 +548,7 @@ function render(){
   var html;
   if(view==="P") html = renderSteps()+'<div class="bar2">'+
       '<button class="a p" id="addStep">Add a step</button>'+
-      '<button class="a q" id="fromSpec">Build from Tool 50</button>'+
+      '<button class="a q" id="fromSpec">Build from Tool E</button>'+
       '<button class="a q" id="shirtSeq">Standard shirt sequence</button></div>';
   else if(view==="L") html = renderLog();
   else if(view==="R") html = renderReview();
@@ -560,14 +560,14 @@ function render(){
 }
 function wireView(){
   if(view==="P"){
-    document.getElementById("addStep").onclick=function(){ gsCall('t52_addStep',[],function(json){
+    document.getElementById("addStep").onclick=function(){ gsCall('tG_addStep',[],function(json){
       var d=JSON.parse(json);
       seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
       var added=mergeNew(d.steps, steps); if(added) openId=added.id;
       render(); }); };
-    document.getElementById("fromSpec").onclick=function(){ gsCall('t52_fromFinishing',[],function(json){
+    document.getElementById("fromSpec").onclick=function(){ gsCall('tG_fromFinishing',[],function(json){
       var d=JSON.parse(json); applyData(json); render();
-      alert((d.added||0)+" operation"+(d.added===1?"":"s")+" brought in from Tool 50.");
+      alert((d.added||0)+" operation"+(d.added===1?"":"s")+" brought in from Tool E.");
     }); };
     document.getElementById("shirtSeq").onclick=onShirtSeq;
   }
@@ -636,7 +636,7 @@ function mergeNew(serverRows, localRows){
 }
 function dupS(id){
   var s=findS(id); if(!s) return;
-  gsCall('t52_addStep',[],function(json){
+  gsCall('tG_addStep',[],function(json){
     var d=JSON.parse(json);
     seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
     var c=mergeNew(d.steps, steps); if(!c) return;
@@ -652,7 +652,7 @@ function onShirtSeq(){
   var payload=SHIRT_SEQ.map(function(r){
     return {location:r[0], operation:r[1], pieces:r[2], prep:r[3], press:r[4]};
   });
-  gsCall('t52_addSteps',[JSON.stringify(payload)],function(json){ applyData(json); render(); });
+  gsCall('tG_addSteps',[JSON.stringify(payload)],function(json){ applyData(json); render(); });
 }
 
 /* ---------- edits: log ---------- */
@@ -687,7 +687,7 @@ function setAtt(a){ var s=findS(active); if(s){ s.attempt=a; render(); queueSave
 function tickProb(p){ var s=findS(active); if(!s) return;
   var i=s.problems.indexOf(p); if(i<0) s.problems.push(p); else s.problems.splice(i,1); render(); queueSave(); }
 function onAddUnplanned(){
-  gsCall('t52_addStep',[JSON.stringify({unplanned:true,location:"Unplanned step"})],function(json){
+  gsCall('tG_addStep',[JSON.stringify({unplanned:true,location:"Unplanned step"})],function(json){
     var d=JSON.parse(json);
     seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
     var s=mergeNew(d.steps, steps); if(!s) return;
@@ -727,7 +727,7 @@ function applyData(json){
   meta=d.meta; pieces=d.pieces; steps=d.steps;
   seamTypes=d.seamTypes; attempts=d.attempts; problems=d.problems;
 }
-gsCall('t52_get',[],function(json){ applyData(json); render(); });
+gsCall('tG_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

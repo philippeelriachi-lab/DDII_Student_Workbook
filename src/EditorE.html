@@ -122,7 +122,7 @@ table.bom .cat{font-family:var(--mono);font-size:9.5px;color:var(--blue)}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 50</span>
+  <span class="num">Tool E</span>
   <h1>Finishing &amp; Hardware Spec</h1>
 </div>
 <div class="tabs">
@@ -188,7 +188,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t50_save') flushSave();
+  if(fnName!=='tE_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -209,7 +209,7 @@ function doSave(){
   var payload={meta:meta, materials:ms, finishing:fs,
     deletedMaterialIds:deletedMaterialIds, deletedFinishingIds:deletedFinishingIds};
   deletedMaterialIds=[]; deletedFinishingIds=[];
-  gsCall('t50_save',[JSON.stringify(payload)]);
+  gsCall('tE_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -309,7 +309,7 @@ function renderMats(){
           inp(m.id,"substitutedFrom",m.substitutedFrom,"What you originally specced, if this is not it")+
           '<div class="hint">Only when stock gave you something different. This feeds your revision log.</div></div>'+
         '<div class="f"><label>Reference <b>•</b></label>'+selRef(m.id,m.referenceId)+
-          (refs.length?"":'<div class="hint">Capture garments in Tool 47 and they will appear here.</div>')+'</div>'+
+          (refs.length?"":'<div class="hint">Capture garments in Tool B and they will appear here.</div>')+'</div>'+
         '<div class="bar2" style="margin:7px 0 0">'+
           '<button class="a q" onclick="dupM(\''+m.id+'\')">Duplicate</button>'+
           '<button class="a q d" onclick="delM(\''+m.id+'\')">Delete line</button></div>'+
@@ -355,7 +355,7 @@ function renderSlip(){
   var total=st.reduce(function(a,m){var lv=lineVal(m); return a+(lv||0);},0);
   return '<div class="slipbox">'+
     '<div class="sheet-head"><span class="t">CSB stock — materials request</span>'+
-    '<span class="n">Tool 50 · slip</span></div>'+
+    '<span class="n">Tool E · slip</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>Group '+(esc(meta.group)||"—")+'</span>'+
       '<span>Digital Design II — Year 2</span>'+
@@ -415,7 +415,7 @@ function renderSheet(){
   return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
     '<div class="sheet">'+
     '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
-    '<span class="n">Tool 50 · finishing and hardware</span></div>'+
+    '<span class="n">Tool E · finishing and hardware</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>Group '+(esc(meta.group)||"—")+'</span>'+
       '<span>build '+build.toFixed(2)+' '+esc(meta.currency)+'</span>'+
@@ -471,7 +471,7 @@ function renderDetails(){
       'you request. An unsigned slip does not count as secured.</p></div>'+
     '<p class="lbl">References</p>'+
     '<div class="card"><span style="font-size:12px;color:var(--soft)">'+refs.length+' reference'+(refs.length===1?"":"s")+
-    ' available from Tool 47.</span></div>';
+    ' available from Tool B.</span></div>';
 }
 
 function render(){
@@ -546,24 +546,24 @@ function applyLookups(d){
 }
 function dupM(id){
   var m=findM(id); if(!m) return;
-  gsCall('t50_addMaterial',[],function(json){
+  gsCall('tE_addMaterial',[],function(json){
     var d=JSON.parse(json); applyLookups(d);
     var c=mergeNew(d.materials, ms); if(!c) return;
     Object.keys(m).forEach(function(k){ if(k!=="id") c[k]=m[k]; });
     openId=c.id; render(); queueSave();
   });
 }
-function onAddM(){ gsCall('t50_addMaterial',[],function(json){
+function onAddM(){ gsCall('tE_addMaterial',[],function(json){
   var d=JSON.parse(json); applyLookups(d);
   var added=mergeNew(d.materials, ms); if(added) openId=added.id;
   render();
 }); }
-function onAddF(){ gsCall('t50_addFinishing',[],function(json){
+function onAddF(){ gsCall('tE_addFinishing',[],function(json){
   var d=JSON.parse(json); applyLookups(d);
   var added=mergeNew(d.finishing, fs); if(added) openId=added.id;
   render();
 }); }
-function onStarter(){ gsCall('t50_addStarter',[],function(json){ applyData(json); render(); }); }
+function onStarter(){ gsCall('tE_addStarter',[],function(json){ applyData(json); render(); }); }
 
 function setView(v){
   view=v;
@@ -578,7 +578,7 @@ function applyData(json){
   meta=d.meta; ms=d.materials; fs=d.finishing; refs=d.refs;
   cats=d.cats; types=d.types; sources=d.sources; statuses=d.status; ops=d.ops;
 }
-gsCall('t50_get',[],function(json){ applyData(json); render(); });
+gsCall('tE_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

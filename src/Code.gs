@@ -42,14 +42,14 @@ var ID_BEARING_KEYS = ["sizing", "research", "boardImages", "iterations", "mater
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu("Tools")
-    .addItem("46 · Sizing intake", "openTool46")
-    .addItem("47 · Research capture", "openTool47")
-    .addItem("48 · Iteration log", "openTool48")
-    .addItem("50 · Finishing and hardware spec", "openTool50")
-    .addItem("51 · Pitch planner", "openTool51")
-    .addItem("52 · Construction log", "openTool52")
-    .addItem("53 · Revision log", "openTool53")
-    .addItem("54 · Jury readiness", "openTool54")
+    .addItem("A · Sizing intake", "openToolA")
+    .addItem("B · Research capture", "openToolB")
+    .addItem("C · Iteration log", "openToolC")
+    .addItem("E · Finishing and hardware spec", "openToolE")
+    .addItem("F · Pitch planner", "openToolF")
+    .addItem("G · Construction log", "openToolG")
+    .addItem("H · Revision log", "openToolH")
+    .addItem("I · Submission readiness", "openToolI")
     .addSeparator()
     .addItem("Print the stock slip", "printStockSlip")
     .addItem("Image schedule", "openImageSchedule")
@@ -305,14 +305,14 @@ function include_(name) {
   return HtmlService.createHtmlOutputFromFile(name).getContent();
 }
 
-function openTool46() { showToolDialog_("Editor46", "Tool 46 · Sizing Intake", 1040, 760); }
-function openTool47() { showToolDialog_("Editor47", "Tool 47 · Product Page Research Capture", 1040, 760); }
-function openTool48() { showToolDialog_("Editor48", "Tool 48 · Iteration Log", 1040, 760); }
-function openTool50() { showToolDialog_("Editor50", "Tool 50 · Finishing & Hardware Spec", 1060, 780); }
-function openTool51() { showToolDialog_("Editor51", "Tool 51 · Technical Pitch Planner", 980, 760); }
-function openTool52() { showToolDialog_("Editor52", "Tool 52 · Construction Log", 920, 780); }
-function openTool53() { showToolDialog_("Editor53", "Tool 53 · Revision Log", 1000, 760); }
-function openTool54() { showToolDialog_("Editor54", "Tool 54 · Technical Jury Readiness", 960, 780); }
+function openToolA() { showToolDialog_("EditorA", "Tool A · Sizing Intake", 1040, 760); }
+function openToolB() { showToolDialog_("EditorB", "Tool B · Product Page Research Capture", 1040, 760); }
+function openToolC() { showToolDialog_("EditorC", "Tool C · Iteration Log", 1040, 760); }
+function openToolE() { showToolDialog_("EditorE", "Tool E · Finishing & Hardware Spec", 1060, 780); }
+function openToolF() { showToolDialog_("EditorF", "Tool F · Technical Pitch Planner", 980, 760); }
+function openToolG() { showToolDialog_("EditorG", "Tool G · Construction Log", 920, 780); }
+function openToolH() { showToolDialog_("EditorH", "Tool H · Revision Log", 1000, 760); }
+function openToolI() { showToolDialog_("EditorI", "Tool I · Submission Readiness", 960, 780); }
 
 function printStockSlip() {
   var sh = sheet_("stockSlip");

@@ -130,7 +130,7 @@ table.spec td.mono{font-family:var(--mono);font-size:10.5px}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 47</span>
+  <span class="num">Tool B</span>
   <h1>Product Page Research Capture</h1>
 </div>
 <div class="tabs">
@@ -188,7 +188,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t47_save') flushSave();
+  if(fnName!=='tB_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -209,7 +209,7 @@ function doSave(){
   var payload={meta:meta, garments:gs, boards:bs,
     deletedGarmentIds:deletedGarmentIds, deletedBoardIds:deletedBoardIds};
   deletedGarmentIds=[]; deletedBoardIds=[];
-  gsCall('t47_save',[JSON.stringify(payload)]);
+  gsCall('tB_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -420,7 +420,7 @@ function renderSheets(){
     return '<div class="sheet">'+
       '<div class="sheet-head"><span class="t">'+
         (esc([g.brand,g.product].filter(Boolean).join(" · "))||"Untitled garment")+'</span>'+
-        '<span class="n">47 / '+String(i+1).padStart(2,"0")+'</span></div>'+
+        '<span class="n">B / '+String(i+1).padStart(2,"0")+'</span></div>'+
       '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
         '<span>'+(esc(g.archetype)||"archetype not set")+'</span>'+
         (g.price?'<span>'+esc(g.price)+'</span>':'')+'</div>'+
@@ -517,13 +517,13 @@ function mergeNew(serverRows, localRows){
 function applyLookups(d){
   archetypes=d.archetypes; boardKinds=d.boardKinds; slotStates=d.slotStates;
 }
-function onAddGarment(){ gsCall('t47_addGarment',[],function(json){
+function onAddGarment(){ gsCall('tB_addGarment',[],function(json){
   var d=JSON.parse(json); applyLookups(d);
   var added=mergeNew(d.garments, gs);
   if(added) openId=added.id;
   render();
 }); }
-function onAddBoard(){ gsCall('t47_addBoard',[],function(json){
+function onAddBoard(){ gsCall('tB_addBoard',[],function(json){
   var d=JSON.parse(json); applyLookups(d);
   var added=mergeNew(d.boards, bs);
   if(added) openId=added.id;
@@ -546,7 +546,7 @@ function applyData(json){
   meta=d.meta; gs=d.garments; bs=d.boards;
   archetypes=d.archetypes; boardKinds=d.boardKinds; slotStates=d.slotStates;
 }
-gsCall('t47_get',[],function(json){ applyData(json); render(); });
+gsCall('tB_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

@@ -135,7 +135,7 @@ table.tbl td.blank{color:var(--mark);font-style:italic}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 53</span>
+  <span class="num">Tool H</span>
   <h1>Revision Log</h1>
 </div>
 <div class="tabs">
@@ -188,7 +188,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t53_save') flushSave();
+  if(fnName!=='tH_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -208,7 +208,7 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ 
 function doSave(){
   var payload={meta:meta, entries:es, deletedIds:deletedIds};
   deletedIds=[];
-  gsCall('t53_save',[JSON.stringify(payload)]);
+  gsCall('tH_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- count ---------- */
@@ -241,7 +241,7 @@ function slotHTML(id,which,name,state){
     'oninput="setSlotName(\''+id+'\',\''+which+'\',this.value)"></div>';
 }
 function renderEntries(){
-  if(!es.length) return '<div class="empty">Nothing yet. If you have your Tool 52 log, seeding from it creates an entry for every deviation it already noticed.</div>';
+  if(!es.length) return '<div class="empty">Nothing yet. If you have your Tool G log, seeding from it creates an entry for every deviation it already noticed.</div>';
   return es.map(function(e,i){
     var m=miss(e), open=e.id===openId, dv=delta(e);
     return '<div class="ent '+(open?"open ":"")+(m?"bad":"good")+'">'+
@@ -329,7 +329,7 @@ function renderSheet(){
   return '<div class="bar2"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
     '<div class="sheet">'+
     '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
-    '<span class="n">Tool 53 · revision log</span></div>'+
+    '<span class="n">Tool H · revision log</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>'+(esc(meta.route)||"route not set")+'</span>'+
       '<span>'+es.length+' revision'+(es.length===1?"":"s")+'</span>'+
@@ -371,19 +371,19 @@ function render(){
   var html;
   if(view==="E") html = renderCount()+renderEntries()+
     '<div class="bar2"><button class="a p" id="addBtn">Add an entry</button>'+
-    '<button class="a q" id="seedBtn">Seed from Tool 52</button></div>'+
+    '<button class="a q" id="seedBtn">Seed from Tool G</button></div>'+
     '<p class="note">Every entry needs a correction, or a stated decision that no correction is needed. '+
     'A divergence you noticed and did nothing about is still an entry — say why you left it.</p>';
   else if(view==="S") html = renderCount()+renderSheet();
   else html = renderCount()+renderDetails();
   document.getElementById("page").innerHTML = html;
   if(view==="E"){
-    document.getElementById("addBtn").onclick=function(){ gsCall('t53_addEntry',[],function(json){
+    document.getElementById("addBtn").onclick=function(){ gsCall('tH_addEntry',[],function(json){
       var d=JSON.parse(json);
       kinds=d.kinds; actions=d.actions; slotStates=d.slotStates;
       var added=mergeNew(d.entries, es); if(added) openId=added.id;
       render(); }); };
-    document.getElementById("seedBtn").onclick=function(){ gsCall('t53_seedFromBuild',[],function(json){
+    document.getElementById("seedBtn").onclick=function(){ gsCall('tH_seedFromBuild',[],function(json){
       var d=JSON.parse(json); applyData(json); render();
       alert(d.added?d.added+" entries created from your construction log. Each still needs what CLO3D predicted, why it diverged, and what you did."
                    :"No deviations found in your construction log yet.");
@@ -452,7 +452,7 @@ function applyData(json){
   var d=JSON.parse(json);
   meta=d.meta; es=d.entries; kinds=d.kinds; actions=d.actions; slotStates=d.slotStates;
 }
-gsCall('t53_get',[],function(json){ applyData(json); render(); });
+gsCall('tH_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

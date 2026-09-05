@@ -112,15 +112,15 @@ button.a.q:hover{background:var(--rulesoft);color:var(--ink)}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 54</span>
-  <h1>Technical Jury Readiness</h1>
+  <span class="num">Tool I</span>
+  <h1>Submission Readiness</h1>
 </div>
 <div class="page" id="page"><div class="loading">Loading…</div></div>
 <div class="sheet" id="sheet"></div>
 
 <script>
-var ROUNDS={mid:{name:"Session 11 · Midterm jury",sub:"before the route decision"},
-            fin:{name:"Final jury",sub:"before the institutional jury"}};
+var ROUNDS={mid:{name:"Session 11 · Midterm presentation",sub:"before the route decision"},
+            fin:{name:"Final submission",sub:"before you hand in"}};
 var round="mid", meta={}, groups=[], shots={n:0,where:[]};
 
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
@@ -208,7 +208,7 @@ function renderSheet(sc){
     }).join("");
   }).join("");
   s.innerHTML = '<div class="sheet-head"><span class="t">'+(esc(meta.item)||"Untitled item")+'</span>'+
-    '<span class="n">Tool 54 · readiness</span></div>'+
+    '<span class="n">Tool I · readiness</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
       '<span>Group '+(esc(meta.group)||"—")+'</span><span>'+esc(ROUNDS[round].name)+'</span>'+
       '<span>'+sc.met+' of '+sc.tot+' ready</span>'+
@@ -250,7 +250,7 @@ var gsBusy=false, gsQueue=[];
    would then overwrite it. So any other call flushes it ahead of itself. */
 function flushSave(){ if(metaTimer){ clearTimeout(metaTimer); metaTimer=null; saveMetaNow(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t54_saveMeta') flushSave();
+  if(fnName!=='tI_saveMeta') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -267,14 +267,14 @@ function gsPump(){
 }
 
 function setRound(r){
-  gsCall('t54_setRound',[r],function(json){ applyData(json); render(); });
+  gsCall('tI_setRound',[r],function(json){ applyData(json); render(); });
 }
 function tick(id){
-  gsCall('t54_toggleSelf',[id],function(json){ applyData(json); render(); });
+  gsCall('tI_toggleSelf',[id],function(json){ applyData(json); render(); });
 }
 var metaTimer=null;
 function saveMetaNow(){
-  gsCall('t54_saveMeta',[JSON.stringify({
+  gsCall('tI_saveMeta',[JSON.stringify({
     name:meta.name, group:meta.group, item:meta.item, gap:meta.gap, round:round
   })],function(json){ applyData(json); });
 }
@@ -287,7 +287,7 @@ function applyData(json){
   var d=JSON.parse(json);
   round=d.round; meta=d.meta; groups=d.groups; shots=d.shots;
 }
-gsCall('t54_get',["mid"],function(json){ applyData(json); render(); });
+gsCall('tI_get',["mid"],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

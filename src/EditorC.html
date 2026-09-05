@@ -143,7 +143,7 @@ table.spec td.blank{color:var(--mark);font-style:italic;font-size:10.5px}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 48</span>
+  <span class="num">Tool C</span>
   <h1>Iteration Log</h1>
 </div>
 <div class="tabs">
@@ -198,7 +198,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t48_save') flushSave();
+  if(fnName!=='tC_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -218,7 +218,7 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(function(){ 
 function doSave(){
   var payload={meta:meta, iterations:es, deletedIds:deletedIds};
   deletedIds=[];
-  gsCall('t48_save',[JSON.stringify(payload)]);
+  gsCall('tC_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- requirements ---------- */
@@ -288,7 +288,7 @@ function renderEntries(){
           '<div class="hint">By the end you should see which one you reach for by default. That is worth knowing about yourself.</div></div>'+
         '<div class="f"><label>Reference it came from</label>'+
           '<select onchange="setF(\''+e.id+'\',\'referenceId\',this.value)">'+refOpts+'</select>'+
-          (refs.length?'':'<div class="hint">Capture garments in Tool 47 and they will appear here.</div>')+'</div>'+
+          (refs.length?'':'<div class="hint">Capture garments in Tool B and they will appear here.</div>')+'</div>'+
         '<div class="slots">'+slots+'</div>'+
         '<div class="f"><label>What I tried <b>•</b></label>'+
           '<textarea rows="2" placeholder="The move you made, in a line or two" '+
@@ -339,7 +339,7 @@ function renderSheets(){
     var views=SLOTS.map(function(s){ return s.label+' '+(got(e,s.k)?"✓":"–"); }).join(" · ");
     return '<div class="sheet">'+
       '<div class="sheet-head"><span class="t">'+(esc(e.title)||"Untitled iteration")+'</span>'+
-      '<span class="n">48 / '+String(i+1).padStart(2,"0")+'</span></div>'+
+      '<span class="n">C / '+String(i+1).padStart(2,"0")+'</span></div>'+
       '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
         '<span>'+(e.session?"Session "+esc(e.session):"—")+'</span>'+
         '<span>'+(esc(e.method)||"method not set")+'</span>'+
@@ -354,7 +354,7 @@ function renderSheets(){
   }).join("");
   var inc=es.filter(function(e){return e.includeInPitch!==false;});
   var run='<div class="sheet"><div class="sheet-head"><span class="t">Compilation running order</span>'+
-    '<span class="n">48 / order</span></div>'+
+    '<span class="n">C / order</span></div>'+
     '<div class="sheet-sub"><span><strong>'+(esc(meta.name)||"—")+'</strong></span>'+
     '<span>'+inc.length+' of '+es.length+' included</span></div>'+
     '<div class="runrow" style="border-bottom:1px solid var(--ink);color:var(--soft);font-size:10px">'+
@@ -432,7 +432,7 @@ function mergeNew(serverRows, localRows){
   return added;
 }
 function dup(id){ var e=find(id); if(!e) return;
-  gsCall('t48_addIteration',[],function(json){
+  gsCall('tC_addIteration',[],function(json){
     var d=JSON.parse(json);
     refs=d.refs; methods=d.methods; decisions=d.decisions;
     var c=mergeNew(d.iterations, es); if(!c) return;
@@ -455,7 +455,7 @@ function onGroupByMethod(){
   });
   render(); queueSave();
 }
-function onAdd(){ gsCall('t48_addIteration',[],function(json){
+function onAdd(){ gsCall('tC_addIteration',[],function(json){
   var d=JSON.parse(json);
   refs=d.refs; methods=d.methods; decisions=d.decisions;
   var added=mergeNew(d.iterations, es); if(added) openId=added.id;
@@ -477,7 +477,7 @@ function applyData(json){
   meta=d.meta; es=d.iterations; refs=d.refs; methods=d.methods; decisions=d.decisions;
   slotStates=(d.slotStates||["Planned","Captured","On the board"]).slice(0,2);
 }
-gsCall('t48_get',[],function(json){ applyData(json); render(); });
+gsCall('tC_get',[],function(json){ applyData(json); render(); });
 </script>
 </body>
 </html>

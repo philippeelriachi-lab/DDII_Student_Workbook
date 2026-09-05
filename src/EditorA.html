@@ -140,7 +140,7 @@ table.rec td.blank{color:var(--mark);font-style:italic}
 <body>
 
 <div class="masthead">
-  <span class="num">Tool 46</span>
+  <span class="num">Tool A</span>
   <h1>Sizing Intake</h1>
 </div>
 
@@ -214,7 +214,7 @@ var gsBusy=false, gsQueue=[];
    So any other call flushes the pending save ahead of itself first. */
 function flushSave(){ if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; doSave(); } }
 function gsCall(fnName,args,onSuccess){
-  if(fnName!=='t46_save') flushSave();
+  if(fnName!=='tA_save') flushSave();
   gsQueue.push({fnName:fnName,args:args||[],onSuccess:onSuccess});
   gsPump();
 }
@@ -242,7 +242,7 @@ function doSave(){
               enteredInCLO:!!p.enteredInCLO, note:p.note};
     })
   };
-  gsCall('t46_save',[JSON.stringify(payload)]);
+  gsCall('tA_save',[JSON.stringify(payload)]);
 }
 
 /* ---------- summary ---------- */
@@ -413,7 +413,7 @@ function renderSheet(){
     '<div class="bar"><button class="a" id="printBtn">Print or save as PDF</button></div>'+
     '<div class="sheet">'+
     '<div class="sheet-head"><span class="t">'+(esc(meta.subjectId)||"Unidentified subject")+'</span>'+
-    '<span class="n">Tool 46 · sizing intake</span></div>'+
+    '<span class="n">Tool A · sizing intake</span></div>'+
     '<div class="sheet-sub">'+
       '<span><strong>'+(esc(meta.subjectType)||"—")+'</strong></span>'+
       (meta.statedSize?'<span>stated '+esc(meta.statedSize)+'</span>':'')+
@@ -452,13 +452,13 @@ function onAccept(){
 }
 function onClear(){
   if(!confirm("Clear every reading? The subject details stay.")) return;
-  gsCall('t46_clearReadings',[],applyData);
+  gsCall('tA_clearReadings',[],applyData);
 }
 function onAddPoint(){
   var label = prompt("What is this point called?"); if(!label) return;
   var hint = prompt("Hint, if it needs one (optional)") || "";
   var avatarField = prompt("Which CLO avatar field does it map to? (optional)") || "";
-  gsCall('t46_addPoint',[JSON.stringify({label:label,hint:hint,avatarField:avatarField})],applyData);
+  gsCall('tA_addPoint',[JSON.stringify({label:label,hint:hint,avatarField:avatarField})],applyData);
 }
 
 document.addEventListener("input",function(e){
@@ -513,7 +513,7 @@ function applyData(json){
   render();
 }
 
-gsCall('t46_get',[],applyData);
+gsCall('tA_get',[],applyData);
 </script>
 </body>
 </html>

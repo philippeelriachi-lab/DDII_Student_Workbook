@@ -1,5 +1,5 @@
 /**
- * Images.gs — shared slot registry helpers for Tools 47, 48 and 53.
+ * Images.gs — shared slot registry helpers for Tools B, C and H.
  * The Images tab is the shot list: one row per slot, whichever tool created it.
  * estMinutes defaults by type, read from Lookups — imageTypes and imageTypeMinutes
  * are two independent lookup lists, paired by position (not by sheet row), so
@@ -116,7 +116,7 @@ function img_deleteForParent_(tool, parentId) {
   img_listForParent_(tool, parentId).forEach(function (r) { deleteRowById_("images", r.id); });
 }
 
-/** Counts Planned slots, optionally restricted to a set of tool labels. Used by Tool 54. */
+/** Counts Planned slots, optionally restricted to a set of tool labels. Used by Tool I. */
 function img_plannedCount_(tools) {
   var set = null;
   if (tools) { set = {}; tools.forEach(function (t) { set[t] = true; }); }

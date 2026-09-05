@@ -1,19 +1,19 @@
 /**
- * Tool48.gs — Iteration Log.
+ * ToolC.gs — Iteration Log.
  * Iterations columns: id, order, title, session, method, referenceId, tried,
  * revealed, decision, includeInPitch, slotFront, slotBack, slotSide, slotPattern.
  * References are read live from the Research tab (same workbook) — no file
- * upload needed. Slots mirror into the Images tab like Tool 47's.
+ * upload needed. Slots mirror into the Images tab like Tool B's.
  */
 
-var T48_SLOTS = [
+var TC_SLOTS = [
   { k: "slotFront", label: "Front", req: true, type: "Screenshot" },
   { k: "slotBack", label: "Back", req: false, type: "Screenshot" },
   { k: "slotSide", label: "Side", req: false, type: "Screenshot" },
   { k: "slotPattern", label: "Pattern", req: false, type: "Pattern export" }
 ];
 
-function t48_get() {
+function tC_get() {
   var cfg = getConfig_();
   var lookups = getLookups_();
   var meta = { name: cfg.studentName || "", group: cfg.group || "" };
@@ -33,7 +33,7 @@ function t48_get() {
   });
 }
 
-function t48_save(payloadJson) {
+function tC_save(payloadJson) {
   var payload = JSON.parse(payloadJson);
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
@@ -57,7 +57,7 @@ function t48_save(payloadJson) {
         slotSide: e.slotSide || "Planned", slotPattern: e.slotPattern || "Planned"
       }, []);
       var name = e.title || "Untitled iteration";
-      T48_SLOTS.forEach(function (s) {
+      TC_SLOTS.forEach(function (s) {
         slots.push({ tool: "48 Iterations", parentId: e.id, name: s.label,
           purpose: name + " — " + s.label, type: s.type, status: e[s.k] || "Planned" });
       });
@@ -67,10 +67,10 @@ function t48_save(payloadJson) {
   } finally {
     lock.releaseLock();
   }
-  return t48_get();
+  return tC_get();
 }
 
-function t48_addIteration() {
+function tC_addIteration() {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
@@ -91,5 +91,5 @@ function t48_addIteration() {
   } finally {
     lock.releaseLock();
   }
-  return t48_get();
+  return tC_get();
 }

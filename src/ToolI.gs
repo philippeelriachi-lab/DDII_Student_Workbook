@@ -1,5 +1,5 @@
 /**
- * Tool54.gs — Technical Jury Readiness.
+ * ToolI.gs — Submission Readiness.
  * Reads sibling tabs directly — no file loading. Verified checks compute
  * their own found/needed counts from Sizing, Research, Iterations,
  * Materials, Finishing, Build, Revisions and Pitch; self-declared checks
@@ -11,7 +11,7 @@
  * jurySelfChecks (a JSON blob), juryRound and readinessGap.
  */
 
-var T54_CHECKS = [
+var TI_CHECKS = [
   { g: "Body and research", items: [
     { id: "avatar", t: "Avatar built from measurements you took", s: "Every point agreed and entered", rounds: ["mid", "fin"], auto: true },
     { id: "refs", t: "Reference garments captured", s: "Five, with composition and construction", rounds: ["mid", "fin"], auto: true },
@@ -56,13 +56,13 @@ var T54_CHECKS = [
   ]}
 ];
 
-function t54_num_(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
+function tI_num_(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
 
-function t54_auto_(id, ctx) {
+function tI_auto_(id, ctx) {
   switch (id) {
     case "avatar": {
       var pts = ctx.sizing;
-      var ag = pts.filter(function (p) { return t54_num_(p.agreed) !== null; }).length;
+      var ag = pts.filter(function (p) { return tI_num_(p.agreed) !== null; }).length;
       var en = pts.filter(function (p) { return !!p.enteredInCLO; }).length;
       return { ok: ag >= 18 && en >= 18, label: ag + " agreed · " + en + " entered" };
     }
@@ -115,7 +115,7 @@ function t54_auto_(id, ctx) {
       return { ok: s >= 8, label: s + " steps logged" };
     }
     case "rate": {
-      var r = t54_num_(ctx.config.labourRate) > 0 && String(ctx.config.rateBasis || "").trim() && String(ctx.config.rateSource || "").trim();
+      var r = tI_num_(ctx.config.labourRate) > 0 && String(ctx.config.rateBasis || "").trim() && String(ctx.config.rateSource || "").trim();
       return { ok: !!r, label: r ? (ctx.config.labourRate + " " + (ctx.config.currency || "")) : "incomplete" };
     }
     case "revlog": {
@@ -152,7 +152,7 @@ function t54_auto_(id, ctx) {
   return null;
 }
 
-function t54_context_(round) {
+function tI_context_(round) {
   var lookups = getLookups_();
   var config = getConfig_();
   var labels = lookups.pitchRounds || [];
@@ -181,7 +181,7 @@ function t54_context_(round) {
   };
 }
 
-function t54_shotCount_() {
+function tI_shotCount_() {
   var rows = img_all_();
   var n = 0, where = [];
   var boardCount = rows.filter(function (r) { return r.tool === "47 Research" && r.status === "Planned"; }).length;
@@ -193,17 +193,17 @@ function t54_shotCount_() {
   return { n: n, where: where };
 }
 
-function t54_get(round) {
+function tI_get(round) {
   round = round === "fin" ? "fin" : "mid";
   var cfg = getConfig_();
-  var ctx = t54_context_(round);
+  var ctx = tI_context_(round);
   var self = {};
   try { self = JSON.parse(cfg.jurySelfChecks || "{}"); } catch (e) { self = {}; }
 
-  var groups = T54_CHECKS.map(function (g) {
+  var groups = TI_CHECKS.map(function (g) {
     var items = g.items.filter(function (i) { return i.rounds.indexOf(round) >= 0; }).map(function (i) {
       if (i.auto) {
-        var r = t54_auto_(i.id, ctx);
+        var r = tI_auto_(i.id, ctx);
         if (r) return { id: i.id, t: i.t, s: i.s, crit: !!i.crit, mode: "auto", ok: r.ok, label: r.label };
       }
       return { id: i.id, t: i.t, s: i.s, crit: !!i.crit, mode: "self", ok: !!self[i.id] };
@@ -215,30 +215,30 @@ function t54_get(round) {
     round: round,
     meta: { name: cfg.studentName || "", group: cfg.group || "", item: cfg.item || "", gap: cfg.readinessGap || "" },
     groups: groups,
-    shots: t54_shotCount_()
+    shots: tI_shotCount_()
   });
 }
 
-function t54_toggleSelf(id) {
+function tI_toggleSelf(id) {
   var cfg = getConfig_();
   var self = {};
   try { self = JSON.parse(cfg.jurySelfChecks || "{}"); } catch (e) { self = {}; }
   self[id] = !self[id];
   setConfig_({ jurySelfChecks: JSON.stringify(self) });
-  return t54_get(cfg.juryRound === "fin" ? "fin" : "mid");
+  return tI_get(cfg.juryRound === "fin" ? "fin" : "mid");
 }
 
-function t54_setRound(round) {
+function tI_setRound(round) {
   round = round === "fin" ? "fin" : "mid";
   setConfig_({ juryRound: round });
-  return t54_get(round);
+  return tI_get(round);
 }
 
-function t54_saveMeta(payloadJson) {
+function tI_saveMeta(payloadJson) {
   var payload = JSON.parse(payloadJson);
   setConfig_({
     studentName: payload.name || "", group: payload.group || "", item: payload.item || "",
     readinessGap: payload.gap || ""
   });
-  return t54_get(payload.round === "fin" ? "fin" : "mid");
+  return tI_get(payload.round === "fin" ? "fin" : "mid");
 }

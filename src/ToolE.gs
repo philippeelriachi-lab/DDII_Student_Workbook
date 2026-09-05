@@ -1,5 +1,5 @@
 /**
- * Tool50.gs — Finishing & Hardware Spec.
+ * ToolE.gs — Finishing & Hardware Spec.
  * Materials columns: id, category, type, item, dimension, qty, unit, source,
  * status, unitValue, lineValue (formula — never write), placement, supplier,
  * substitutedFrom, referenceId, notes, stockN (formula — never write).
@@ -9,9 +9,9 @@
  * same as the prototype; printing the real tab is the menu's job.
  */
 
-var T50_MATERIALS_SKIP = ["lineValue", "stockN"];
+var TE_MATERIALS_SKIP = ["lineValue", "stockN"];
 
-function t50_get() {
+function tE_get() {
   var cfg = getConfig_();
   var lookups = getLookups_();
   var meta = {
@@ -36,7 +36,7 @@ function t50_get() {
   });
 }
 
-function t50_save(payloadJson) {
+function tE_save(payloadJson) {
   var payload = JSON.parse(payloadJson);
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
@@ -58,7 +58,7 @@ function t50_save(payloadJson) {
         qty: m.qty || "", unit: m.unit || "", source: m.source || "", status: m.status || "Not secured",
         unitValue: m.unitValue || "", placement: m.placement || "", supplier: m.supplier || "",
         substitutedFrom: m.substitutedFrom || "", referenceId: m.referenceId || "", notes: m.notes || ""
-      }, T50_MATERIALS_SKIP);
+      }, TE_MATERIALS_SKIP);
     });
     (payload.finishing || []).forEach(function (f, i) {
       writeRowByField_("finishing", f.id, {
@@ -70,18 +70,18 @@ function t50_save(payloadJson) {
   } finally {
     lock.releaseLock();
   }
-  return t50_get();
+  return tE_get();
 }
 
-function t50_addMaterial() {
-  return t50_appendRow_("materials", { status: "Not secured" });
+function tE_addMaterial() {
+  return tE_appendRow_("materials", { status: "Not secured" });
 }
-function t50_addFinishing() {
-  return t50_appendRow_("finishing", {});
+function tE_addFinishing() {
+  return tE_appendRow_("finishing", {});
 }
 
 /** The "Add the usual shirt lines" starter — five common material lines. */
-function t50_addStarter() {
+function tE_addStarter() {
   var starter = [
     { category: "Fabric", type: "Main fabric", placement: "" },
     { category: "Fabric", type: "Interlining / fusible", placement: "Collar, stand, cuffs, placket" },
@@ -93,7 +93,7 @@ function t50_addStarter() {
   lock.waitLock(30000);
   try {
     starter.forEach(function (s) {
-      t50_appendRowUnlocked_("materials", {
+      tE_appendRowUnlocked_("materials", {
         category: s.category, type: s.type, placement: s.placement, status: "Not secured"
       });
     });
@@ -101,22 +101,22 @@ function t50_addStarter() {
   } finally {
     lock.releaseLock();
   }
-  return t50_get();
+  return tE_get();
 }
 
-function t50_appendRow_(key, fields) {
+function tE_appendRow_(key, fields) {
   var lock = LockService.getDocumentLock();
   lock.waitLock(30000);
   try {
-    t50_appendRowUnlocked_(key, fields);
+    tE_appendRowUnlocked_(key, fields);
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
-  return t50_get();
+  return tE_get();
 }
 
-function t50_appendRowUnlocked_(key, fields) {
+function tE_appendRowUnlocked_(key, fields) {
   var sh = sheet_(key);
   var idx = headerIndex_(key);
   var lastCol = sh.getLastColumn();
