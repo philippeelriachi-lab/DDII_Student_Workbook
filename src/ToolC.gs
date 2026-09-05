@@ -43,7 +43,7 @@ function tC_save(payloadJson) {
     }
     (payload.deletedIds || []).forEach(function (id) {
       deleteRowById_("iterations", id);
-      img_deleteForParent_("48 Iterations", id);
+      img_deleteForParent_("C Iterations", id);
     });
     // Records first, image slots in one batch after — so a slow or failing
     // slot write can never leave records half-saved.
@@ -58,7 +58,7 @@ function tC_save(payloadJson) {
       }, []);
       var name = e.title || "Untitled iteration";
       TC_SLOTS.forEach(function (s) {
-        slots.push({ tool: "48 Iterations", parentId: e.id, name: s.label,
+        slots.push({ tool: "C Iterations", parentId: e.id, name: s.label,
           purpose: name + " — " + s.label, type: s.type, status: e[s.k] || "Planned" });
       });
     });

@@ -52,11 +52,11 @@ function tB_save(payloadJson) {
 
     (payload.deletedGarmentIds || []).forEach(function (id) {
       deleteRowById_("research", id);
-      img_deleteForParent_("47 Research", id);
+      img_deleteForParent_("B Research", id);
     });
     (payload.deletedBoardIds || []).forEach(function (id) {
       deleteRowById_("boardImages", id);
-      img_deleteForParent_("47 Research", id);
+      img_deleteForParent_("B Research", id);
     });
 
     // Records are written first and image slots registered in one batch after,
@@ -73,7 +73,7 @@ function tB_save(payloadJson) {
       }, []);
       var title = [g.brand, g.product].filter(String).join(" · ") || "Untitled garment";
       TB_SLOTS.forEach(function (s) {
-        slots.push({ tool: "47 Research", parentId: g.id, name: s.label,
+        slots.push({ tool: "B Research", parentId: g.id, name: s.label,
           purpose: title + " — " + s.label, type: "Screenshot", status: g[s.k] || "Planned" });
       });
     });
@@ -82,7 +82,7 @@ function tB_save(payloadJson) {
       writeRowByField_("boardImages", b.id, {
         kind: b.kind || "", name: b.name || "", note: b.note || "", state: b.state || "Planned"
       }, []);
-      slots.push({ tool: "47 Research", parentId: b.id, name: "board",
+      slots.push({ tool: "B Research", parentId: b.id, name: "board",
         purpose: b.name || b.kind || "Board image", type: b.kind || "Detail",
         status: b.state || "Planned" });
     });

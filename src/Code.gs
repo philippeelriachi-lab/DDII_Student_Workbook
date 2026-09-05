@@ -56,6 +56,7 @@ function onOpen() {
     .addSeparator()
     .addItem("Tidy up identifiers", "tidyUpIdentifiers")
     .addItem("Diagnose", "runDiagnose")
+    .addItem("Run the A–I migration (once)", "runLetterMigration")
     .addToUi();
 }
 

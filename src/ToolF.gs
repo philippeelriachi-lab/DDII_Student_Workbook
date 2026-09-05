@@ -22,18 +22,18 @@ var TF_ROUND_TEMPLATE = {
     ]
   },
   midterm: {
-    label: "Session 11 · Midterm jury", budget: 480, unresolvedKey: "unresolvedMidterm",
+    label: "Session 11 · Midterm presentation", budget: 480, unresolvedKey: "unresolvedMidterm",
     secs: [
-      { t: "Direction and reference lineage", m: 60, p: "Where this came from and what it is. The panel has not seen your board." },
+      { t: "Direction and reference lineage", m: 60, p: "Where this came from and what it is. The room has not seen your board." },
       { t: "Iteration range and the narrowing", m: 75, p: "What you explored and why you chose this. Show the range, not just the winner." },
-      { t: "The resolved item", m: 90, p: "Worn and hanger renders. Walk the panel around it." },
+      { t: "The resolved item", m: 90, p: "Worn and hanger renders. Walk the room around it." },
       { t: "Fit development", m: 60, p: "What the pose testing showed and what you changed because of it." },
       { t: "Materials, hardware and finishing", m: 75, p: "Your spec. What you chose, why, and where it came from." },
       { t: "Production intention", m: 60, p: "What you plan to build, in what, and whether you have it." }
     ]
   },
   final: {
-    label: "Final jury", budget: 600, unresolvedKey: "unresolvedFinal",
+    label: "Final submission", budget: 600, unresolvedKey: "unresolvedFinal",
     secs: [
       { t: "Where it started", m: 60, p: "Research and direction, briefly. Do not re-run the midterm." },
       { t: "Development and the decision", m: 75, p: "Iteration, narrowing, and what settled it." },
@@ -41,7 +41,7 @@ var TF_ROUND_TEMPLATE = {
       { t: "Materials and specification", m: 60, p: "What the garment is made of and how that was decided." },
       { t: "Digital to physical", m: 90, p: "Cutting, construction, what your sewing plan turned out to be." },
       { t: "Where prediction and outcome diverged", m: 105, p: "Your revision log. The most interesting thing you have — do not rush it." },
-      { t: "The garment", m: 90, p: "Present it physically. Let the panel look while you talk." },
+      { t: "The garment", m: 90, p: "Present it physically. Let the room look while you talk." },
       { t: "What I would do next", m: 60, p: "Not an apology. A direction." }
     ]
   }

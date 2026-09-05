@@ -38,7 +38,7 @@ function tH_save(payloadJson) {
     }
     (payload.deletedIds || []).forEach(function (id) {
       deleteRowById_("revisions", id);
-      img_deleteForParent_("53 Revisions", id);
+      img_deleteForParent_("H Revisions", id);
     });
     // Records first, image slots in one batch after — so a slow or failing
     // slot write can never leave records half-saved.
@@ -53,12 +53,12 @@ function tH_save(payloadJson) {
       }, TH_SKIP);
       var title = e.title || "Untitled divergence";
       if (String(e.slotPredicted || "").trim()) {
-        slots.push({ tool: "53 Revisions", parentId: e.id, name: "predicted",
+        slots.push({ tool: "H Revisions", parentId: e.id, name: "predicted",
           purpose: title + " — predicted (CLO3D)", type: "Detail",
           status: e.slotPredictedState || "Planned" });
       }
       if (String(e.slotActual || "").trim()) {
-        slots.push({ tool: "53 Revisions", parentId: e.id, name: "actual",
+        slots.push({ tool: "H Revisions", parentId: e.id, name: "actual",
           purpose: title + " — actual (garment)", type: "Photograph",
           status: e.slotActualState || "Planned" });
       }

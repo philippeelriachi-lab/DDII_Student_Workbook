@@ -155,7 +155,7 @@ function renderRoute(fails){
     '<div class="verdict '+(fails.length?"toile":"prod")+'">'+
     '<b>'+(fails.length?"On this evidence: toile":"On this evidence: full production")+'</b>'+
     (fails.length? "Not met — "+fails.map(function(f){return esc(f.toLowerCase());}).join("; ")+"."
-      : "All criteria met. The panel may still decide otherwise on pattern readiness or fit evidence.")+
+      : "All criteria met. Your tutors may still decide otherwise on pattern readiness or fit evidence.")+
     '</div></div>';
 }
 function renderShots(){

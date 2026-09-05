@@ -8,7 +8,7 @@
  *
  * Self-declared answers, the round toggle and the "what's not ready" note
  * have no dedicated columns anywhere else, so they live in Config under
- * jurySelfChecks (a JSON blob), juryRound and readinessGap.
+ * readinessSelfChecks (a JSON blob), readinessRound and readinessGap.
  */
 
 var TI_CHECKS = [
@@ -48,7 +48,7 @@ var TI_CHECKS = [
   { g: "Presentation", items: [
     { id: "planned", t: "Pitch planned within the time allowed", s: "", rounds: ["mid", "fin"], auto: true },
     { id: "rehearsed", t: "Rehearsed aloud", s: "Standing, at full volume, timed", rounds: ["mid", "fin"], auto: true },
-    { id: "unres", t: "What is unresolved is named in the pitch", s: "The panel can only help with problems you admit", rounds: ["mid", "fin"], auto: true },
+    { id: "unres", t: "What is unresolved is named in the pitch", s: "The room can only help with problems you admit", rounds: ["mid", "fin"], auto: true },
     { id: "questions", t: "I have prepared for the questions I expect", s: "", rounds: ["mid", "fin"], auto: true },
     { id: "images", t: "Full image set — worn and hanger", s: "Defined angles, not just the good side", rounds: ["mid"] },
     { id: "garment", t: "Garment finished and present", s: "", rounds: ["fin"] },
@@ -158,7 +158,11 @@ function tI_context_(round) {
   var labels = lookups.pitchRounds || [];
   var roundKey = round === "fin" ? "final" : "midterm";
   var roundIndex = { pitch: 0, midterm: 1, final: 2 }[roundKey];
-  var label = labels[roundIndex] || (round === "fin" ? "Final jury" : "Midterm jury");
+  // Fall back to tool F's own template rather than a second copy of the text —
+  // the two spellings had already drifted ("Midterm jury" here against
+  // "Session 11 · Midterm jury" there), so with no pitchRounds lookup the
+  // presentation checks matched no Pitch rows at all.
+  var label = labels[roundIndex] || TF_ROUND_TEMPLATE[roundKey].label;
   var pitchRows = readRows_("pitch");
   var secRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Section"; });
   var qRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Question"; });
@@ -184,11 +188,11 @@ function tI_context_(round) {
 function tI_shotCount_() {
   var rows = img_all_();
   var n = 0, where = [];
-  var boardCount = rows.filter(function (r) { return r.tool === "47 Research" && r.status === "Planned"; }).length;
+  var boardCount = rows.filter(function (r) { return r.tool === "B Research" && r.status === "Planned"; }).length;
   if (boardCount) { n += boardCount; where.push(boardCount + " on the board"); }
-  var compCount = rows.filter(function (r) { return r.tool === "48 Iterations" && r.status === "Planned"; }).length;
+  var compCount = rows.filter(function (r) { return r.tool === "C Iterations" && r.status === "Planned"; }).length;
   if (compCount) { n += compCount; where.push(compCount + " for the compilation"); }
-  var revCount = rows.filter(function (r) { return r.tool === "53 Revisions" && r.status === "Planned"; }).length;
+  var revCount = rows.filter(function (r) { return r.tool === "H Revisions" && r.status === "Planned"; }).length;
   if (revCount) { n += revCount; where.push(revCount + " revision pairs"); }
   return { n: n, where: where };
 }
@@ -198,7 +202,7 @@ function tI_get(round) {
   var cfg = getConfig_();
   var ctx = tI_context_(round);
   var self = {};
-  try { self = JSON.parse(cfg.jurySelfChecks || "{}"); } catch (e) { self = {}; }
+  try { self = JSON.parse(cfg.readinessSelfChecks || "{}"); } catch (e) { self = {}; }
 
   var groups = TI_CHECKS.map(function (g) {
     var items = g.items.filter(function (i) { return i.rounds.indexOf(round) >= 0; }).map(function (i) {
@@ -222,15 +226,15 @@ function tI_get(round) {
 function tI_toggleSelf(id) {
   var cfg = getConfig_();
   var self = {};
-  try { self = JSON.parse(cfg.jurySelfChecks || "{}"); } catch (e) { self = {}; }
+  try { self = JSON.parse(cfg.readinessSelfChecks || "{}"); } catch (e) { self = {}; }
   self[id] = !self[id];
-  setConfig_({ jurySelfChecks: JSON.stringify(self) });
-  return tI_get(cfg.juryRound === "fin" ? "fin" : "mid");
+  setConfig_({ readinessSelfChecks: JSON.stringify(self) });
+  return tI_get(cfg.readinessRound === "fin" ? "fin" : "mid");
 }
 
 function tI_setRound(round) {
   round = round === "fin" ? "fin" : "mid";
-  setConfig_({ juryRound: round });
+  setConfig_({ readinessRound: round });
   return tI_get(round);
 }
 

@@ -236,7 +236,7 @@ function renderReqs(){
     [fs.length>=4?"met":"unmet","Finishing operations",fs.length+" / 4"],
     [(n>0&&val===n)?"met":"soft","Every line valued",val+" / "+n]
   ];
-  var h='<div class="reqs"><div style="font-size:11px;color:var(--soft);margin-bottom:8px">What the midterm panel will check</div>'+
+  var h='<div class="reqs"><div style="font-size:11px;color:var(--soft);margin-bottom:8px">What is checked at the midterm</div>'+
     items.map(function(i){
       return '<div class="req '+i[0]+'"><span>'+i[1]+'</span><span class="s">'+i[2]+'</span></div>';
     }).join("");
