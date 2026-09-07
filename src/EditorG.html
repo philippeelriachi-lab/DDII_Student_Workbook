@@ -78,6 +78,7 @@ body{font-family:var(--sans);color:var(--ink);background:var(--table);font-size:
   stroke-linecap:round;stroke-linejoin:round}
 .phase.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .phase.on svg{stroke:#fff}
+.phase.on.run{box-shadow:inset 0 0 0 2px var(--ok)}
 .phase[disabled]{opacity:.32;cursor:default}
 .attempts{display:flex;border:1px solid var(--rule);margin-bottom:9px}
 .attempts label{flex:1;text-align:center;padding:9px 5px;font-size:11.5px;cursor:pointer;
@@ -206,7 +207,7 @@ var SHIRT_SEQ=[
 
 var meta={}, pieces=[], steps=[], seamTypes=[], attempts=[], problems=[];
 var openId=null, view="P", saveTimer=null, deletedIds=[];
-var active=null, phase=null, phaseStart=0, tick=null, nudged=false;
+var active=null, phase=null, running=false, phaseStart=0, tick=null, nudged=false;
 
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
@@ -316,20 +317,24 @@ function renderSteps(){
 }
 
 /* ---------- log ---------- */
+function phaseLabel(k){ return PHASES.filter(function(p){return p.k===k;})[0].l; }
 function renderRunbar(){
   var s=findS(active);
-  if(!s) return '<div class="l">Nothing running</div><div class="c">Tap a step below to start</div><div class="k">0:00</div><div class="s"></div>';
-  var live=phase?(performance.now()-phaseStart)/1000:0;
+  if(!s) return '<div class="l">No step selected</div><div class="c">Tap a step below to select it</div><div class="k">0:00</div><div class="s"></div>';
+  var live=running?(performance.now()-phaseStart)/1000:0;
   var t={prep:s.prepSec,sew:s.sewSec,press:s.pressSec};
-  if(phase) t[phase]+=live;
-  return '<div class="l">'+(phase?PHASES.filter(function(p){return p.k===phase;})[0].l+" running":"Paused")+'</div>'+
+  if(running) t[phase]+=live;
+  var lbl = !phase ? "Pick prep, sew or press"
+          : running ? phaseLabel(phase)+" running"
+          : phaseLabel(phase)+" selected — press Start";
+  return '<div class="l">'+lbl+'</div>'+
     '<div class="c">'+(esc(s.location)||"Untitled step")+'</div>'+
     '<div class="k">'+mmss(t.prep+t.sew+t.press)+'</div>'+
     '<div class="s">prep <b>'+mmss(t.prep)+'</b>&nbsp;&nbsp;sew <b>'+mmss(t.sew)+'</b>&nbsp;&nbsp;press <b>'+mmss(t.press)+'</b></div>';
 }
 function renderPhases(){
   return PHASES.map(function(p){
-    return '<button class="phase'+(phase===p.k?" on":"")+'" '+(active?"":"disabled")+
+    return '<button class="phase'+(phase===p.k?(running?" on run":" on"):"")+'" '+(active?"":"disabled")+
       ' onclick="switchPhase(\''+p.k+'\')">'+SVG[p.i]+'<span>'+p.l+'</span></button>';
   }).join("");
 }
@@ -359,9 +364,12 @@ function renderQueue(){
   }).join("");
 }
 function renderLog(){
-  return '<div class="runbar'+(active?"":" idle")+'" id="runbar">'+renderRunbar()+'</div>'+
+  return '<div class="runbar'+(running?"":" idle")+'" id="runbar">'+renderRunbar()+'</div>'+
     '<div class="phases" id="phases">'+renderPhases()+'</div>'+
     (function(){ var a=renderAtt(); return '<div class="attempts" id="attempts">'+a.att+'</div><div class="probs" id="probs">'+a.prob+'</div>'; })()+
+    '<div class="runctl">'+
+      '<button class="a p" id="startBtn" '+((active&&phase&&!running)?"":"disabled")+'>Start timer</button>'+
+      '<button class="a" id="stopBtn" '+(running?"":"disabled")+'>Stop timer</button></div>'+
     '<div class="runctl">'+
       '<button class="a" id="photoBtn" '+(active?"":"disabled")+'>Photo taken</button>'+
       '<button class="a p" id="doneBtn" '+(active?"":"disabled")+'>Finish this step</button></div>'+
@@ -572,6 +580,8 @@ function wireView(){
     document.getElementById("shirtSeq").onclick=onShirtSeq;
   }
   if(view==="L"){
+    document.getElementById("startBtn").onclick=startTimer;
+    document.getElementById("stopBtn").onclick=stopTimer;
     document.getElementById("photoBtn").onclick=onPhoto;
     document.getElementById("doneBtn").onclick=finishStep;
     document.getElementById("addUnplanned").onclick=onAddUnplanned;
@@ -656,31 +666,52 @@ function onShirtSeq(){
 }
 
 /* ---------- edits: log ---------- */
+/* Selecting a step only selects it. Nothing is timed, and the step is not
+   counted as begun, until Start is pressed — picking a step up to read it
+   used to stamp it started and put a clock on it. */
 function startStep(id){
   if(active===id) return;
-  if(active&&phase) pausePhase();
-  active=id; phase=null;
-  var s=findS(id);
-  if(!s.actualOrder) s.actualOrder=steps.filter(function(x){return x.actualOrder;}).length+1;
-  if(!s.startedAt) s.startedAt=new Date().toISOString();
-  switchPhase("prep");
-}
-function switchPhase(k){
-  if(!active) return;
-  var s=findS(active); var now=performance.now();
-  if(phase) s[phase+"Sec"]+=(now-phaseStart)/1000;
-  phase=(phase===k)?null:k; phaseStart=now;
+  bankPhase();
+  active=id; phase=null; running=false;
   render(); queueSave();
 }
-function pausePhase(){
-  if(!active||!phase) return;
-  var s=findS(active); s[phase+"Sec"]+=(performance.now()-phaseStart)/1000; phase=null; queueSave();
+/* Choosing a phase mid-run banks what is on the clock and carries on under the
+   new one; choosing one while stopped just selects it. */
+function switchPhase(k){
+  if(!active) return;
+  if(running){
+    var s=findS(active); var now=performance.now();
+    s[phase+"Sec"]+=(now-phaseStart)/1000;
+    phaseStart=now;
+  }
+  phase=k;
+  render(); queueSave();
+}
+function startTimer(){
+  if(!active||!phase||running) return;
+  var s=findS(active);
+  if(!s.actualOrder) s.actualOrder=steps.filter(function(x){return x.actualOrder;}).length+1;
+  if(!s.startedAt) s.startedAt=new Date().toISOString();
+  running=true; phaseStart=performance.now();
+  render(); queueSave();
+}
+function stopTimer(){
+  if(!running) return;
+  bankPhase();
+  render(); queueSave();
+}
+/* Puts whatever is on the clock onto the selected phase and stops it. */
+function bankPhase(){
+  if(!running) return;
+  var s=findS(active);
+  if(s) s[phase+"Sec"]+=(performance.now()-phaseStart)/1000;
+  running=false;
 }
 function finishStep(){
   if(!active) return;
-  pausePhase();
+  bankPhase();
   var s=findS(active); s.endedAt=new Date().toISOString();
-  active=null; phase=null; render(); queueSave();
+  active=null; phase=null; running=false; render(); queueSave();
 }
 function onPhoto(){ var s=findS(active); if(!s) return; s.photos++; render(); queueSave(); }
 function setAtt(a){ var s=findS(active); if(s){ s.attempt=a; render(); queueSave(); } }
@@ -702,17 +733,17 @@ function setMeta(k,v){ meta[k]=v; queueSave(); }
 
 /* long-run nudge — checked once a minute while a phase is running */
 setInterval(function(){
-  if(!active||!phase) return;
+  if(!running) return;
   if((performance.now()-phaseStart)/1000>45*60 && !nudged){
     nudged=true;
     if(!confirm("This step has been running 45 minutes. Still working on it?\n\nCancel stops the clock now — you can correct the time under Review.")){
-      pausePhase(); render();
+      bankPhase(); render();
     }
     nudged=false;
   }
 },60000);
 tick=setInterval(function(){ if(view==="L" && document.getElementById("runbar")){
-  document.getElementById("runbar").innerHTML=renderRunbar(); document.getElementById("runbar").className="runbar"+(active?"":" idle"); } },500);
+  document.getElementById("runbar").innerHTML=renderRunbar(); document.getElementById("runbar").className="runbar"+(running?"":" idle"); } },500);
 
 function setView(v){
   view=v;

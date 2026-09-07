@@ -153,7 +153,7 @@ button.a:disabled{opacity:.35;cursor:default}
 <div class="page" id="page"><div class="loading">Loading…</div></div>
 
 <script>
-var meta={}, rounds={}, roundKeys=["pitch","midterm","final"], round="pitch", view="P", saveTimer=null;
+var meta={}, rounds={}, roundKeys=["pitch","midterm"], round="pitch", view="P", saveTimer=null;
 var running=false, idx=0, secStart=0, runStart=0, times=[], tick=null;
 
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){

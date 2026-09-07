@@ -45,14 +45,28 @@ var TI_CHECKS = [
     { id: "sewplan", t: "Sewing plan followable by someone else", s: "Could they build it without you", rounds: ["fin"] },
     { id: "techpack", t: "Tech pack complete", s: "Every template section populated", rounds: ["fin"] }
   ]},
-  { g: "Presentation", items: [
-    { id: "planned", t: "Pitch planned within the time allowed", s: "", rounds: ["mid", "fin"], auto: true },
-    { id: "rehearsed", t: "Rehearsed aloud", s: "Standing, at full volume, timed", rounds: ["mid", "fin"], auto: true },
-    { id: "unres", t: "What is unresolved is named in the pitch", s: "The room can only help with problems you admit", rounds: ["mid", "fin"], auto: true },
-    { id: "questions", t: "I have prepared for the questions I expect", s: "", rounds: ["mid", "fin"], auto: true },
+  // The midterm is presented aloud, so these read tool F's plan. The final is
+  // handed in, so the same group becomes a checklist over the submission
+  // document — the tool cannot see inside a slide file, so every one of those
+  // is the student's own say-so.
+  { g: "Presentation", gFin: "Submission document", items: [
+    { id: "planned", t: "Pitch planned within the time allowed", s: "", rounds: ["mid"], auto: true },
+    { id: "rehearsed", t: "Rehearsed aloud", s: "Standing, at full volume, timed", rounds: ["mid"], auto: true },
+    { id: "unres", t: "What is unresolved is named in the pitch", s: "The room can only help with problems you admit", rounds: ["mid"], auto: true },
+    { id: "questions", t: "I have prepared for the questions I expect", s: "", rounds: ["mid"], auto: true },
     { id: "images", t: "Full image set — worn and hanger", s: "Defined angles, not just the good side", rounds: ["mid"] },
-    { id: "garment", t: "Garment finished and present", s: "", rounds: ["fin"] },
-    { id: "feedback", t: "I can take feedback without defending", s: "Questions after, not during", rounds: ["mid", "fin"] }
+    { id: "feedback", t: "I can take feedback without defending", s: "Questions after, not during", rounds: ["mid"] },
+    { id: "garment", t: "Garment finished and handed in", s: "", rounds: ["fin"] },
+    { id: "docdirection", t: "Direction and reference lineage are in the document", s: "Which board images, and what you took from each", rounds: ["fin"] },
+    { id: "dociter", t: "The iteration range and the narrowing are shown", s: "What you explored, not only what you chose", rounds: ["fin"] },
+    { id: "docfit", t: "Fit development is documented", s: "Pose testing, the corrections, and whether they held", rounds: ["fin"] },
+    { id: "docspec", t: "Materials, hardware and finishing specification included", s: "With sources and dimensions, not adjectives", rounds: ["fin"] },
+    { id: "docbuild", t: "Digital to physical is documented", s: "Cutting, construction, and what the sewing plan turned out to be", rounds: ["fin"] },
+    { id: "docrev", t: "Where prediction and outcome diverged is in the document", s: "Your revision log, shown rather than summarised", rounds: ["fin"] },
+    { id: "docgarment", t: "The finished garment is documented", s: "Worn and hanger, at the defined angles", rounds: ["fin"] },
+    { id: "docnext", t: "Closing statement and what you would do next included", s: "Not an apology. A direction.", rounds: ["fin"] },
+    { id: "docorder", t: "The document reads start to finish, in order", s: "Someone who was not there can follow it without you", rounds: ["fin"] },
+    { id: "docfile", t: "Exported as one slide file and checked at print size", s: "Text legible on a hard copy, images not pixelated", rounds: ["fin"] }
   ]}
 ];
 
@@ -129,7 +143,7 @@ function tI_auto_(id, ctx) {
     case "planned": {
       var rd = ctx.pitchRound;
       if (!rd) return { ok: false, label: "not planned" };
-      var budget = ctx.round === "mid" ? 480 : 600;
+      var budget = TF_ROUND_TEMPLATE.midterm.budget;
       var t = rd.secs.reduce(function (a, b) { return a + (parseInt(b.plannedSec) || 0); }, 0);
       return { ok: t > 0 && t <= budget, label: Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0") };
     }
@@ -155,27 +169,22 @@ function tI_auto_(id, ctx) {
 function tI_context_(round) {
   var lookups = getLookups_();
   var config = getConfig_();
-  var labels = lookups.pitchRounds || [];
-  var roundKey = round === "fin" ? "final" : "midterm";
-  var roundIndex = { pitch: 0, midterm: 1, final: 2 }[roundKey];
-  // Fall back to tool F's own template rather than a second copy of the text —
-  // the two spellings had already drifted ("Midterm jury" here against
-  // "Session 11 · Midterm jury" there), so with no pitchRounds lookup the
-  // presentation checks matched no Pitch rows at all.
-  var label = labels[roundIndex] || TF_ROUND_TEMPLATE[roundKey].label;
-  var pitchRows = readRows_("pitch");
-  var secRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Section"; });
-  var qRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Question"; });
-  var pitchRound = null;
-  if (secRows.length || qRows.length) {
+  // Only the midterm is presented aloud. The final is handed in as a document,
+  // so there is no pitch to read for it — its presentation group is replaced
+  // by the submission-document checklist, which is entirely self-declared.
+  var pitchRound = { secs: [], rehearsals: 0, unres: "", qs: [] };
+  if (round !== "fin") {
+    var labels = lookups.pitchRounds || [];
+    var label = labels[TF_ROUND_KEYS.indexOf("midterm")] || TF_ROUND_TEMPLATE.midterm.label;
+    var pitchRows = readRows_("pitch");
+    var secRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Section"; });
+    var qRows = pitchRows.filter(function (r) { return r.round === label && r.kind === "Question"; });
     pitchRound = {
       secs: secRows.map(function (r) { return { plannedSec: r.plannedSec }; }),
       rehearsals: secRows.reduce(function (m, r) { return Math.max(m, parseFloat(r.rehearsals) || 0); }, 0),
-      unres: config[round === "fin" ? "unresolvedFinal" : "unresolvedMidterm"] || "",
+      unres: config.unresolvedMidterm || "",
       qs: qRows.map(function (r) { return { title: r.title }; })
     };
-  } else {
-    pitchRound = { secs: [], rehearsals: 0, unres: config[round === "fin" ? "unresolvedFinal" : "unresolvedMidterm"] || "", qs: [] };
   }
   return {
     round: round, lookups: lookups, config: config,
@@ -212,7 +221,7 @@ function tI_get(round) {
       }
       return { id: i.id, t: i.t, s: i.s, crit: !!i.crit, mode: "self", ok: !!self[i.id] };
     });
-    return { g: g.g, items: items };
+    return { g: (round === "fin" && g.gFin) ? g.gFin : g.g, items: items };
   }).filter(function (g) { return g.items.length; });
 
   return JSON.stringify({

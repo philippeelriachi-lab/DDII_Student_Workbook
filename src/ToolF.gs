@@ -9,7 +9,10 @@
  * lookup list.
  */
 
-var TF_ROUND_KEYS = ["pitch", "midterm", "final"];
+// The final round is a submission, not a presentation — nothing is spoken, so
+// there is no pitch to plan for it. Tool I checks the submission document
+// instead. Lookups.pitchRounds may still carry a third label; it goes unused.
+var TF_ROUND_KEYS = ["pitch", "midterm"];
 var TF_ROUND_TEMPLATE = {
   pitch: {
     label: "Session 7 · Direction pitch", budget: 180, unresolvedKey: "unresolvedPitch",
@@ -30,19 +33,6 @@ var TF_ROUND_TEMPLATE = {
       { t: "Fit development", m: 60, p: "What the pose testing showed and what you changed because of it." },
       { t: "Materials, hardware and finishing", m: 75, p: "Your spec. What you chose, why, and where it came from." },
       { t: "Production intention", m: 60, p: "What you plan to build, in what, and whether you have it." }
-    ]
-  },
-  final: {
-    label: "Final submission", budget: 600, unresolvedKey: "unresolvedFinal",
-    secs: [
-      { t: "Where it started", m: 60, p: "Research and direction, briefly. Do not re-run the midterm." },
-      { t: "Development and the decision", m: 75, p: "Iteration, narrowing, and what settled it." },
-      { t: "Fit development and testing", m: 60, p: "Pose testing, corrections, and whether they held." },
-      { t: "Materials and specification", m: 60, p: "What the garment is made of and how that was decided." },
-      { t: "Digital to physical", m: 90, p: "Cutting, construction, what your sewing plan turned out to be." },
-      { t: "Where prediction and outcome diverged", m: 105, p: "Your revision log. The most interesting thing you have — do not rush it." },
-      { t: "The garment", m: 90, p: "Present it physically. Let the room look while you talk." },
-      { t: "What I would do next", m: 60, p: "Not an apology. A direction." }
     ]
   }
 };
