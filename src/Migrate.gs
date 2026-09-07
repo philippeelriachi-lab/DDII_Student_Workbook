@@ -198,18 +198,12 @@ function mig_replaceColumn_(key, header, map) {
 }
 
 function mig_replaceLookupList_(listName, map) {
+  var col = mig_lookupColumn_(listName);
+  if (!col) return 0;
   var sh = sheet_("lookups");
-  var lastCol = sh.getLastColumn();
-  if (!lastCol) return 0;
-  var headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
-  var col = -1;
-  for (var c = 0; c < headers.length; c++) {
-    if (String(headers[c] || "").trim() === listName) { col = c; break; }
-  }
-  if (col < 0) return 0;
   var last = sh.getLastRow();
   if (last < 2) return 0;
-  var rng = sh.getRange(2, col + 1, last - 1, 1);
+  var rng = sh.getRange(2, col, last - 1, 1);
   var vals = rng.getValues();
   var n = 0;
   vals.forEach(function (r) {
@@ -218,4 +212,153 @@ function mig_replaceLookupList_(listName, map) {
   });
   if (n) rng.setValues(vals);
   return n;
+}
+
+/* ---------------------------------------------------------------------------
+ * Final-round cleanup.
+ *
+ * Tool F no longer plans a pitch for the final round, because the final is
+ * handed in rather than spoken. Anything left behind from when it did is
+ * inert — nothing reads it — but it still sits in the workbook. This removes
+ * it. Unlike the migration above this deletes rows, so it counts first, says
+ * exactly what it is about to remove, and does nothing without a yes.
+ * ------------------------------------------------------------------------- */
+
+// Both spellings, so a workbook cleaned up before the migration ran is caught too.
+var MIG_FINAL_LABELS = ["Final submission", "Final jury"];
+
+function cleanUpFinalRound() {
+  var ui = SpreadsheetApp.getUi();
+  var found = mig_surveyFinal_();
+
+  if (!found.pitchRows && !found.lookupCells && !found.configRows) {
+    ui.alert("Final-round cleanup", "Nothing left to remove.", ui.ButtonSet.OK);
+    return;
+  }
+
+  var what = [];
+  if (found.pitchRows) {
+    what.push("  " + found.pitchRows + " row" + (found.pitchRows === 1 ? "" : "s") +
+      " on the Pitch tab — the sections and questions you planned for the final round");
+  }
+  if (found.lookupCells) {
+    what.push("  the final round's entry in the pitchRounds list on Lookups");
+  }
+  if (found.configRows) {
+    what.push("  the unresolvedFinal key on Config");
+  }
+
+  var answer = ui.alert("Final-round cleanup",
+    "This permanently deletes:\n\n" + what.join("\n") +
+    "\n\nNothing reads any of it any more. There is no undo other than the " +
+    "file's own version history. Delete it?",
+    ui.ButtonSet.YES_NO);
+  if (answer !== ui.Button.YES) return;
+
+  var lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+  var done;
+  try {
+    done = { pitchRows: mig_deleteFinalPitchRows_(),
+             lookupCells: mig_clearFinalLookup_(),
+             configRows: mig_deleteConfigKeys_(["unresolvedFinal"]) };
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+
+  ui.alert("Final-round cleanup",
+    done.pitchRows + " Pitch row" + (done.pitchRows === 1 ? "" : "s") + " deleted\n" +
+    done.lookupCells + " Lookups cell" + (done.lookupCells === 1 ? "" : "s") + " cleared\n" +
+    done.configRows + " Config key" + (done.configRows === 1 ? "" : "s") + " removed",
+    ui.ButtonSet.OK);
+}
+
+function mig_isFinalLabel_(v) {
+  return MIG_FINAL_LABELS.indexOf(String(v)) >= 0;
+}
+
+/** Counts what the cleanup would remove, without touching anything. */
+function mig_surveyFinal_() {
+  var out = { pitchRows: 0, lookupCells: 0, configRows: 0 };
+
+  var pitch = sheet_("pitch");
+  var pidx = headerIndex_("pitch");
+  if (pidx.round !== undefined && pitch.getLastRow() > 1) {
+    pitch.getRange(2, pidx.round + 1, pitch.getLastRow() - 1, 1).getValues()
+      .forEach(function (r) { if (mig_isFinalLabel_(r[0])) out.pitchRows++; });
+  }
+
+  var col = mig_lookupColumn_("pitchRounds");
+  if (col > 0) {
+    var lk = sheet_("lookups");
+    if (lk.getLastRow() > 1) {
+      lk.getRange(2, col, lk.getLastRow() - 1, 1).getValues()
+        .forEach(function (r) { if (mig_isFinalLabel_(r[0])) out.lookupCells++; });
+    }
+  }
+
+  var cfg = sheet_("config");
+  if (cfg.getLastRow() > 1) {
+    cfg.getRange(2, 1, cfg.getLastRow() - 1, 1).getValues()
+      .forEach(function (r) { if (String(r[0]) === "unresolvedFinal") out.configRows++; });
+  }
+  return out;
+}
+
+/** 1-based column of a named list on Lookups, or 0 if there isn't one. */
+function mig_lookupColumn_(listName) {
+  var sh = sheet_("lookups");
+  var lastCol = sh.getLastColumn();
+  if (!lastCol) return 0;
+  var headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  for (var c = 0; c < headers.length; c++) {
+    if (String(headers[c] || "").trim() === listName) return c + 1;
+  }
+  return 0;
+}
+
+function mig_deleteFinalPitchRows_() {
+  var sh = sheet_("pitch");
+  var idx = headerIndex_("pitch");
+  if (idx.round === undefined) return 0;
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var vals = sh.getRange(2, idx.round + 1, last - 1, 1).getValues();
+  var rows = [];
+  vals.forEach(function (r, i) { if (mig_isFinalLabel_(r[0])) rows.push(i + 2); });
+  // Bottom up, so the row numbers below stay valid as rows disappear.
+  rows.sort(function (a, b) { return b - a; }).forEach(function (r) { sh.deleteRow(r); });
+  return rows.length;
+}
+
+/**
+ * Blanks the final round's entry in the pitchRounds list. The cell is cleared
+ * rather than the row deleted — that column shares its rows with every other
+ * lookup list on the tab, so deleting the row would take an unrelated value
+ * out of a different list with it.
+ */
+function mig_clearFinalLookup_() {
+  var col = mig_lookupColumn_("pitchRounds");
+  if (!col) return 0;
+  var sh = sheet_("lookups");
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var rng = sh.getRange(2, col, last - 1, 1);
+  var vals = rng.getValues();
+  var n = 0;
+  vals.forEach(function (r) { if (mig_isFinalLabel_(r[0])) { r[0] = ""; n++; } });
+  if (n) rng.setValues(vals);
+  return n;
+}
+
+function mig_deleteConfigKeys_(keys) {
+  var sh = sheet_("config");
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var vals = sh.getRange(2, 1, last - 1, 1).getValues();
+  var rows = [];
+  vals.forEach(function (r, i) { if (keys.indexOf(String(r[0])) >= 0) rows.push(i + 2); });
+  rows.sort(function (a, b) { return b - a; }).forEach(function (r) { sh.deleteRow(r); });
+  return rows.length;
 }

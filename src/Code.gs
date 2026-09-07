@@ -57,6 +57,7 @@ function onOpen() {
     .addItem("Tidy up identifiers", "tidyUpIdentifiers")
     .addItem("Diagnose", "runDiagnose")
     .addItem("Run the A–I migration (once)", "runLetterMigration")
+    .addItem("Clean up the old final round", "cleanUpFinalRound")
     .addToUi();
 }
 
