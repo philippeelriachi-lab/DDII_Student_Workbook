@@ -57,6 +57,10 @@ with every formula, the student dropdown, column widths and frozen headers.
 It is safe to run again at any time: it repairs structure and formulas and
 never touches submitted reviews.
 
+Once it has run, reload the spreadsheet. A **Peer Review** menu appears next to
+Help — everything below is reachable from there, so this is the last time you
+need the script editor except to push code.
+
 ## 5 · Deploy
 
 **Deploy → New deployment → Web app.**
@@ -73,6 +77,21 @@ Copy the web app URL and give that to the class. Not the spreadsheet link.
 > Re-deploying after a `clasp push`: **Deploy → Manage deployments →** pencil →
 > Version **New version → Deploy**. Without a new version students keep getting
 > the old code.
+
+## The Peer Review menu
+
+| Item | What it does |
+| --- | --- |
+| **Compile a feedback package…** | Pick a review moment and a student. Writes a Google Doc holding every review collected about them, grouped by reviewer, into the same Drive folder as this spreadsheet. Reviewer names can be turned off. |
+| **Rebuild the sheets** | Runs `setup()` again, after asking. Repairs headers, formulas, the dropdown and the widths. Submitted reviews are never touched. |
+| **Deployment and link** | Shows the current web app URL — the link to give the class — and what the deployment settings need to be. |
+
+The compile step reads the same rows the Package sheet does, so it is bound by
+the same rule: don't sort or reorder Responses.
+
+Compiling writes a document and moves it in Drive, so the first time you use it
+Apps Script asks for permission again, listing Docs and Drive alongside Sheets.
+That is expected — it is the same unverified-app dialog as the first run.
 
 ## Changing the class list
 

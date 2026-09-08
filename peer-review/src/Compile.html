@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root{
+    --paper:#ffffff; --ink:#000000; --rule:#9a9a9a; --rule-soft:#d6d6d6;
+    --field:#f6f6f4; --mark:#1b4dd1; --muted:#5c5c5c; --good:#1a6b32; --bad:#b3261e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;padding:18px 20px 20px}
+
+  h1{font-size:15px;font-weight:700;margin:0 0 3px;border-bottom:2px solid var(--ink);padding-bottom:7px}
+  .strap{font-size:12px;color:var(--muted);margin:8px 0 16px;max-width:58ch}
+
+  .ident{border:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr}
+  .ident .cell{border-right:1px solid var(--rule-soft);padding:9px 11px}
+  .ident .cell:last-child{border-right:none}
+  .ident label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:4px}
+  .ident select{width:100%;font-family:inherit;font-size:13.5px;color:var(--ink);
+    border:none;border-bottom:1px solid var(--rule);background:transparent;
+    padding:3px 0 4px;border-radius:0}
+  select:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+  .opt{display:flex;gap:8px;align-items:flex-start;margin:14px 0 0;font-size:12.5px}
+  .opt input{margin-top:2px}
+  .opt span small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+
+  .actions{display:flex;gap:9px;align-items:center;margin-top:20px;
+    border-top:2px solid var(--ink);padding-top:14px;flex-wrap:wrap}
+  button{font-family:inherit;font-size:13.5px;padding:8px 16px;border-radius:0;cursor:pointer}
+  .primary{background:var(--ink);color:var(--paper);border:1px solid var(--ink)}
+  .primary[disabled]{opacity:.45;cursor:default}
+  .ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+
+  .status{font-size:12.5px;margin-top:13px;min-height:18px}
+  .status.err{color:var(--bad)}
+  .status.ok{color:var(--good)}
+  .result{border-left:3px solid var(--good);padding:8px 0 8px 11px;margin-top:13px;font-size:12.5px}
+  .result a{color:var(--mark)}
+  .result .n{color:var(--muted);display:block;margin-top:3px;font-size:11.5px}
+  .loading{color:var(--muted);font-size:12.5px;padding:24px 0}
+</style>
+</head>
+<body>
+
+<h1>Compile a feedback package</h1>
+<p class="strap">Every review collected about one student, grouped by reviewer, as a Google Doc
+you can print or share. The document lands in the same Drive folder as this spreadsheet.</p>
+
+<div id="boot" class="loading">Loading the class list…</div>
+
+<div id="app" style="display:none">
+  <section class="ident">
+    <div class="cell">
+      <label for="round">Review moment</label>
+      <select id="round"></select>
+    </div>
+    <div class="cell">
+      <label for="student">Student</label>
+      <select id="student"></select>
+    </div>
+  </section>
+
+  <label class="opt">
+    <input type="checkbox" id="named" checked>
+    <span>Name the reviewers
+      <small>Off writes "Reviewer 1", "Reviewer 2" instead. Numbering is per document,
+      so it does not follow anyone between packages.</small></span>
+  </label>
+
+  <div class="actions">
+    <button class="primary" id="go">Create the document</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+
+  <div class="status" id="status"></div>
+  <div id="result"></div>
+</div>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function msgOf(e){ return (e && e.message) ? e.message : String(e); }
+
+google.script.run.withSuccessHandler(boot).withFailureHandler(function(e){
+  $('boot').textContent = 'Could not load: ' + msgOf(e);
+}).compile_options();
+
+function boot(opts){
+  $('boot').style.display = 'none';
+  $('app').style.display = 'block';
+
+  opts.rounds.forEach(function(r){
+    var o = document.createElement('option');
+    o.value = r.key; o.textContent = r.label;
+    $('round').appendChild(o);
+  });
+
+  var p = document.createElement('option');
+  p.value = ''; p.textContent = 'Select a student';
+  $('student').appendChild(p);
+  opts.students.forEach(function(s){
+    var o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    $('student').appendChild(o);
+  });
+
+  $('go').addEventListener('click', build);
+  $('close').addEventListener('click', function(){ google.script.host.close(); });
+  $('student').addEventListener('change', function(){ setStatus(''); });
+}
+
+function setStatus(msg, kind){
+  var el = $('status');
+  el.textContent = msg;
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+function build(){
+  if (!$('student').value){
+    setStatus('Choose a student first.', 'err');
+    return;
+  }
+  $('go').disabled = true;
+  $('result').innerHTML = '';
+  setStatus('Compiling…');
+
+  google.script.run
+    .withSuccessHandler(function(r){
+      $('go').disabled = false;
+      setStatus('');
+      $('result').innerHTML =
+        '<div class="result"><a href="' + r.url + '" target="_blank" rel="noopener">Open ' +
+        escapeHtml(r.name) + '</a>' +
+        '<span class="n">' + r.reviews + ' review' + (r.reviews === 1 ? '' : 's') + ', ' +
+        r.answers + ' answers. Saved beside this spreadsheet in Drive.</span></div>';
+    })
+    .withFailureHandler(function(e){
+      $('go').disabled = false;
+      setStatus(msgOf(e), 'err');
+    })
+    .compile_build({
+      student: $('student').value,
+      roundKey: $('round').value,
+      showReviewers: $('named').checked
+    });
+}
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
+}
+</script>
+</body>
+</html>
